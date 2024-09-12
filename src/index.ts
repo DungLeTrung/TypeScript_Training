@@ -1,4 +1,4 @@
-import { _function} from './type/union_types/union_types'
+import { circleConfig, fullName} from './type/interfaces/example'
 
 //BASIC TYPES
 // console.log(number); // 1
@@ -20,5 +20,9 @@ import { _function} from './type/union_types/union_types'
 // console.log("Default Parameter2: ", divide(3, 4))
 
 //UNION TYPES
-_function(2)
-_function('string')
+// _function(2)
+// _function('string')
+
+//INTERFACE
+fullName({ firstName: 'Le', lastName: 'Trung Dung'})
+circleConfig({ color: 'Red', radius: 40, diameter: 50})
