@@ -1,8 +1,4 @@
-import { number, string, boolean, any, _arrays, _arrays2, Color, color, a } from './type/basic_types/seven_type';
-import { Person } from './type/basic_types/object_type';
-import { Person1 } from './type/basic_types/optional_properties';
-import { person } from './type/basic_types/type_assertions';
-
+import { add, minus, multiply, divide } from './type/function_types/function_type';
 
 // console.log(number); // 1
 // console.log(string); // 'string'
@@ -16,4 +12,10 @@ import { person } from './type/basic_types/type_assertions';
 
 // console.log(Person1); //
 
-console.log(person); //
+// console.log(person); //
+
+console.log("Traditional Function: ", add(3, 4))
+console.log("Arrow Function: ", minus(3, 4))
+console.log("Optional Parameter: ", multiply(3, 4))
+console.log("Optional Parameter2: ", multiply(3, 4, 5))
+console.log("Default Parameter2: ", divide(3, 4))
