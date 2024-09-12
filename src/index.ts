@@ -1,3 +1,5 @@
+import div2, { add, div, minus, mul } from "./module/import_module"
+import { Person, updatePerson } from "./type/utility_types/partial"
 
 //BASIC TYPES
 // console.log(number); // 1
@@ -10,8 +12,6 @@
 // console.log(Person); //
 // console.log(Person1); //
 // console.log(person); //
-
-import { Person, updatePerson } from "./type/utility_types/partial"
 
 //FUNCTION TYPES
 // console.log("Traditional Function: ", add(3, 4))
@@ -62,8 +62,8 @@ const person = {
 
 //PARTIAL
 const updatePersonn: Readonly<Person> = {
-    gender: "Male"
-  }
+  gender: "Male"
+}
 
 //READONLY
 // const updatePersonn: Readonly<Person> = {
@@ -76,12 +76,18 @@ const updatePersonn: Readonly<Person> = {
 //   gender: "Male"
 // }
 
-console.log(updatePerson(person, updatePersonn))
+// console.log(updatePerson(person, updatePersonn))
 
-//RECORD
-const person2: Record<string, string> = {
-  firstName: "Le",
-  lastName: "Dung"
-}
+// //RECORD
+// const person2: Record<string, string> = {
+//   firstName: "Le",
+//   lastName: "Dung"
+// }
 
-console.log(person2)
+// console.log(person2)
+
+console.log("Add", add(1, 2))
+console.log("Minus", minus(10, 3))
+console.log("Mul", mul(10, 3))
+console.log("Div", div(15, 3))
+console.log("Div2", div2(15, 4))
