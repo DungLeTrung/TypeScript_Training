@@ -1,5 +1,3 @@
-import { Employee, Employee2, getData, getProperty } from './type/generics/generic_types'
-import { circleConfig, fullName} from './type/interfaces/example'
 
 //BASIC TYPES
 // console.log(number); // 1
@@ -12,6 +10,8 @@ import { circleConfig, fullName} from './type/interfaces/example'
 // console.log(Person); //
 // console.log(Person1); //
 // console.log(person); //
+
+import { Person, updatePerson } from "./type/utility_types/partial"
 
 //FUNCTION TYPES
 // console.log("Traditional Function: ", add(3, 4))
@@ -51,5 +51,37 @@ import { circleConfig, fullName} from './type/interfaces/example'
 // const person = {name: 'Le', age: 34, gender: 'Female'}
 // console.log("Display: ", getProperty(person, 'name'))
 
-const string = new Employee2<string>("Adamoo!!")
-console.log(string.getContents())
+// const string = new Employee2<string>("Adamoo!!")
+// console.log(string.getContents())
+
+const person = {
+  name: "Adamo",
+  age: 22,
+  gender: "Female"
+}
+
+//PARTIAL
+const updatePersonn: Readonly<Person> = {
+    gender: "Male"
+  }
+
+//READONLY
+// const updatePersonn: Readonly<Person> = {
+//   gender: "Male"
+// }
+// updatePersonn.gender = "Female"
+
+//REQUIRED
+// const updatePersonn2: Required<Person> = {
+//   gender: "Male"
+// }
+
+console.log(updatePerson(person, updatePersonn))
+
+//RECORD
+const person2: Record<string, string> = {
+  firstName: "Le",
+  lastName: "Dung"
+}
+
+console.log(person2)
