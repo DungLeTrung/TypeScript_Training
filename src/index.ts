@@ -1,3 +1,4 @@
+import { Employee, Employee2, getData, getProperty } from './type/generics/generic_types'
 import { circleConfig, fullName} from './type/interfaces/example'
 
 //BASIC TYPES
@@ -24,5 +25,31 @@ import { circleConfig, fullName} from './type/interfaces/example'
 // _function('string')
 
 //INTERFACE
-fullName({ firstName: 'Le', lastName: 'Trung Dung'})
-circleConfig({ color: 'Red', radius: 40, diameter: 50})
+// fullName({ firstName: 'Le', lastName: 'Trung Dung'})
+// circleConfig({ color: 'Red', radius: 40, diameter: 50})
+
+//GENERICS
+// console.log(getData<number>([1, 2, 3, 4]))
+// console.log(getData<string>(["A", "D", "A", "M", "O"]))
+
+// interface Person {
+//   name: string;
+//   age: number;
+//   gender: string;
+// }
+
+// const personList: Employee<Person> = [
+//   {
+//     name: 'Le',
+//     age: 34,
+//     gender: 'Female'
+//   }
+// ]
+
+// console.log(personList)
+
+// const person = {name: 'Le', age: 34, gender: 'Female'}
+// console.log("Display: ", getProperty(person, 'name'))
+
+const string = new Employee2<string>("Adamoo!!")
+console.log(string.getContents())
