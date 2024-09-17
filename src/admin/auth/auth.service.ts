@@ -1,12 +1,12 @@
 import bcrypt from 'bcrypt';
 import { Response } from 'express';
 import jwt from 'jsonwebtoken';
-import { ILoginUserInput, IUser, IUserRegister } from '../../interface/user.interface';
+import { ILoginResult, ILoginUserInput, IUser, IUserRegister } from '../../interface/user.interface';
 import { User } from '../../models/user.model';
 import { parseDate, USER_ROLE } from '../../utils/const';
 import { REGEX } from '../../utils/regex';
 
-export const login = async ({ username, password }: ILoginUserInput, res: Response): Promise<any> => {
+export const login = async ({ username, password }: ILoginUserInput, res: Response): Promise<ILoginResult> => {
     const userExisting: IUser | null = await User.findOne({ username }).exec();
 
     if (!REGEX.USERNAME.test(username)) {
@@ -102,7 +102,7 @@ const register = async ({username, password, name, email, date_of_birth, invite_
 
   return {
     ...newUser.toObject(),
-    password: 'Not shown',
+    password: 'Private',
   };
 };
 

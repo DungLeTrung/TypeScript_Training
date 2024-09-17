@@ -30,3 +30,9 @@ export interface ILoginUserInput {
   username: string;
   password: string;
 }
+
+export interface ILoginResult {
+  user: IUser;
+  accessToken: string;
+  refreshToken: string;
+}

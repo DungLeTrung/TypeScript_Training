@@ -13,7 +13,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
         });
     } catch (error) {
       const errorMessage = (error as Error).message || 'An unknown error occurred.';
-        res.status(500).json({
+        res.status(400).json({
             message: errorMessage,
         });
     }
@@ -32,7 +32,7 @@ const register = async (req: Request, res: Response): Promise<void> => {
       },
     });
   } catch (error) {
-    res.status(500).json({
+    res.status(400).json({
       errors: (error as Error).toString(),
     });
   }
