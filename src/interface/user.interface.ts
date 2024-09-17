@@ -1,6 +1,6 @@
 import { Document } from 'mongoose';
-import { USER_ROLE } from '../utils/const';
 import { IProject } from './project.interface';
+import { USER_ROLE } from '../utils/const';
 
 export interface IUser extends Document {
   username: string;

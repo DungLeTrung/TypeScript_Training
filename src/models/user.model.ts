@@ -1,7 +1,7 @@
 import { Schema, model } from 'mongoose';
+import { IUser } from '../interface/user.interface';
 import { USER_ROLE } from '../utils/const';
 import { REGEX } from '../utils/regex';
-import { IUser } from '../interface/user.interface';
 
 const userSchema = new Schema<IUser>({
   username: {

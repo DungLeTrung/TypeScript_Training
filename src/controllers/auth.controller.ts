@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
-import authService from '../services/authService';
 import { ILoginUserInput, IUserRegister } from '../interface/user.interface'; // Import the input interface
+import authService from '../services/auth.service';
 
 export const login = async (req: Request, res: Response): Promise<void> => {
     const { username, password }: ILoginUserInput = req.body;
