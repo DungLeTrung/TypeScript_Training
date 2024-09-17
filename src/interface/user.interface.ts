@@ -31,8 +31,7 @@ export interface ILoginUserInput {
   password: string;
 }
 
-export interface ILoginResult {
-  user: IUser;
+export interface ILoginResult extends IUser {
   accessToken: string;
   refreshToken: string;
 }

@@ -7,7 +7,7 @@ import { parseDate, USER_ROLE } from '../../utils/const';
 import { REGEX } from '../../utils/regex';
 
 export const login = async ({ username, password }: ILoginUserInput, res: Response): Promise<ILoginResult> => {
-    const userExisting: IUser | null = await User.findOne({ username }).exec();
+    const userExisting: IUser | null = await User.findOne({ username });
 
     if (!REGEX.USERNAME.test(username)) {
       throw new Error('Username must be greater than 5 characters.');
