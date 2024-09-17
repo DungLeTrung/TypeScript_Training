@@ -1,10 +1,10 @@
 import bcrypt from 'bcrypt';
 import { Response } from 'express';
 import jwt from 'jsonwebtoken';
-import { ILoginUserInput, IUser, IUserRegister } from '../interface/user.interface';
-import { User } from '../models/user.model';
-import { parseDate, USER_ROLE } from '../utils/const';
-import { REGEX } from '../utils/regex';
+import { ILoginUserInput, IUser, IUserRegister } from '../../interface/user.interface';
+import { User } from '../../models/user.model';
+import { parseDate, USER_ROLE } from '../../utils/const';
+import { REGEX } from '../../utils/regex';
 
 export const login = async ({ username, password }: ILoginUserInput, res: Response): Promise<any> => {
     const userExisting: IUser | null = await User.findOne({ username }).exec();
