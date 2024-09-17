@@ -8,9 +8,17 @@ import { REGEX } from '../utils/regex';
 
 export const login = async ({ username, password }: ILoginUserInput, res: Response): Promise<any> => {
     const userExisting: IUser | null = await User.findOne({ username }).exec();
+
+    if (!REGEX.USERNAME.test(username)) {
+      throw new Error('Username must be greater than 5 characters.');
+    }
+
+    if(!REGEX.PASSWORD.test(password)){
+      throw new Error('Password must be at least 8 characters long and include at least one special character.');
+    }
     
     if (!userExisting) {
-        throw new Error('User does not exist.');
+        throw new Error('Enter username and password!!!');
     }
 
     const isMatch = await bcrypt.compare(password, userExisting.password);
