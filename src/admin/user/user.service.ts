@@ -31,7 +31,7 @@ const detailUser = async (userId: string): Promise<IUser | null> => {
   }
 
   try {
-    const user = await User.findById(userId)
+    const user = await User.findById({userId, deletedAt: null})
       .select('-password') 
       .populate('projects', 'name slug start_date end_date total_task process') // Populate projects with selected fields
       .exec();
@@ -77,8 +77,14 @@ const updateUser = async (_id: string, userData: IUserUpdate): Promise<IUserUpda
     throw new Error('Id must be required.');
   }
 
+  const dateOfBirth = typeof userData.date_of_birth === 'string' ? new Date(userData.date_of_birth) : userData.date_of_birth;
+
   if (!mongoose.Types.ObjectId.isValid(_id)) {
     throw new Error('Invalid user ID format.');
+  }
+
+  if (dateOfBirth && dateOfBirth > new Date()) {
+    throw new Error('date_of_birth cannot be a future date.');
   }
   
   try {
@@ -109,7 +115,6 @@ export const createUserWithInvite = async (
   email?: string,
   date_of_birth?: Date
 ): Promise<IUser> => {
-  console.log(projectId);
   if (!mongoose.Types.ObjectId.isValid(projectId)) {
     throw new Error('Invalid project ID format.');
   }
@@ -132,7 +137,11 @@ export const createUserWithInvite = async (
     throw new Error('Email is empty or duplicate!!!');
   }
 
-  const parsedDateOfBirth = typeof date_of_birth === 'string' ? new Date(date_of_birth) : date_of_birth;
+  const dateOfBirth = typeof date_of_birth === 'string' ? new Date(date_of_birth) : date_of_birth;
+
+  if (dateOfBirth && dateOfBirth > new Date()) {
+    throw new Error('date_of_birth cannot be a future date.');
+  }
 
   try {
     const inviteId = await createInviteId();
@@ -143,14 +152,11 @@ export const createUserWithInvite = async (
       role,
       name,
       email,
-      date_of_birth: parsedDateOfBirth,
+      date_of_birth: dateOfBirth,
       invite_id: inviteId,
       is_active: true,
       projects: [projectId]  
     });
-
-    console.log(newUser)
-
     const savedUser = await newUser.save();
     return savedUser;
   } catch (error) {

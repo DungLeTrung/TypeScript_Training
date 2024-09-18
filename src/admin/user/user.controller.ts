@@ -85,7 +85,6 @@ const updateUser = async (req: Request, res: Response): Promise<void> => {
 
   try {
     const updatedUser = await userService.updateUser(_id, updateData);
-    console.log(updatedUser)
     if (!updatedUser) {
       res.status(404).json({ message: 'User not found.' });
       return;

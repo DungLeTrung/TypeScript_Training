@@ -56,7 +56,11 @@ const register = async ({username, password, name, email, date_of_birth, invite_
     throw new Error('Date of birth must be provided.');
   }
 
-  const parsedDateOfBirth = typeof date_of_birth === 'string' ? new Date(date_of_birth) : date_of_birth;
+  const dateOfBirth = typeof date_of_birth === 'string' ? new Date(date_of_birth) : date_of_birth;
+
+  if (dateOfBirth && dateOfBirth > new Date()) {
+    throw new Error('date_of_birth cannot be a future date.');
+  }
 
   const userExisting = await User.findOne({ username }).exec();
   if (userExisting != null) {
@@ -88,7 +92,7 @@ const register = async ({username, password, name, email, date_of_birth, invite_
     username,
     name,
     email,
-    date_of_birth: parsedDateOfBirth,
+    date_of_birth: dateOfBirth,
     invite_id,
     password: hashPassword,
     role: USER_ROLE.USER,

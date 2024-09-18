@@ -25,7 +25,6 @@ const createProject = async (projectData: IProject): Promise<IProject> => {
       total_task: projectData.total_task,
       process: projectData.process,
     });
-    console.log(newProject);
 
     const savedProject = await newProject.save();
     return savedProject;
