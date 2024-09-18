@@ -41,7 +41,6 @@ const userSchema = new Schema<IUser>({
   },
   date_of_birth: {
     type: Date,
-    required: false
   },
   invite_id: {
     type: String,
@@ -50,7 +49,13 @@ const userSchema = new Schema<IUser>({
     type: Boolean,
     default: true, 
   },
-  projects: { type: Schema.Types.ObjectId, ref: 'Project' } 
+  projects: [{ 
+    type: Schema.Types.ObjectId,
+    ref: 'Project', 
+  }],
+  deletedAt: {
+    type: Date
+  },
 }, {
   timestamps: true, 
 });

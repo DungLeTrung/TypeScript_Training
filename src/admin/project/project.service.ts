@@ -122,6 +122,9 @@ const addMembersToProject = async (projectId: string, userId: string): Promise<I
     if (!user) {
       throw new Error('User not found.');
     }
+    if (user.deletedAt) {
+      throw new Error('Cannot add a deleted user to the project.');
+    }
 
     if (project.users?.some(user => user.toString() === userId)) {
       throw new Error('User already added to this project.');
@@ -133,7 +136,11 @@ const addMembersToProject = async (projectId: string, userId: string): Promise<I
       { $addToSet: { users: userId } }, 
       { new: true } 
     ).exec();
-
+    await User.findByIdAndUpdate(
+      userId,
+      { $addToSet: { projects: projectId } }, 
+      { new: true }
+    ).exec();
     return updatedProject;
   } catch (error) {
     throw new Error(`Failed to add user to project`);

@@ -56,13 +56,7 @@ const register = async ({username, password, name, email, date_of_birth, invite_
     throw new Error('Date of birth must be provided.');
   }
 
-  const parsedDateOfBirth = typeof date_of_birth === 'string'
-    ? parseDate(date_of_birth)
-    : date_of_birth;
-
-  if (isNaN(parsedDateOfBirth.getTime())) {
-    throw new Error('The date_of_birth is invalid.');
-  }
+  const parsedDateOfBirth = typeof date_of_birth === 'string' ? new Date(date_of_birth) : date_of_birth;
 
   const userExisting = await User.findOne({ username }).exec();
   if (userExisting != null) {

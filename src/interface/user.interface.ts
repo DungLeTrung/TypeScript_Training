@@ -1,9 +1,8 @@
 import { Document } from 'mongoose';
-import { IProject } from './project.interface';
 import { USER_ROLE } from '../utils/const';
+import { IProject } from './project.interface';
 
 export interface IUser extends Document {
-  id?: string;
   username: string;
   password: string;
   role: USER_ROLE;
@@ -12,7 +11,15 @@ export interface IUser extends Document {
   date_of_birth?: Date;
   invite_id?: string;
   is_active: boolean;
-  projects?: Array<IProject>
+  projects?: Array<IProject>;
+  deletedAt?: Date;
+}
+
+export interface IUserUpdate {
+  name?: string;
+  email?: string;
+  date_of_birth?: Date;
+  is_active?: boolean;
 }
 
 export interface IUserRegister {
@@ -25,7 +32,8 @@ export interface IUserRegister {
   date_of_birth?: Date;
   invite_id?: string;
   is_active?: boolean;
-  projects?: Array<IProject>
+  projects?: Array<IProject>;
+  deletedAt?: Date;
 }
 
 export interface ILoginUserInput {
@@ -36,4 +44,22 @@ export interface ILoginUserInput {
 export interface ILoginResult extends IUser {
   accessToken: string;
   refreshToken: string;
+}
+
+export interface IPagination {
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+export interface IUserResponse {
+  message: string;
+  data: IUser[];
+  pagination: IPagination;
+}
+
+export interface IUserListResponse {
+  total: number;
+  users: IUser[];
 }

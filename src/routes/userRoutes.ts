@@ -7,11 +7,11 @@ userRouter.post('/create-invite', userController.createInvite);  
 
 userRouter.get('/list-users', userController.listUsers);   
 
-userRouter.put('/detail-users', userController.detailUser);   
+userRouter.get('/detail-user/:id', userController.detailUser);   
 
-userRouter.delete('/update-user/:id', userController.updateUser);   
+userRouter.put('/update-user', userController.updateUser);   
 
-userRouter.get('/delete-user/:id', userController.deleteUser);   
+userRouter.delete('/delete-user/:id', userController.deleteUser);   
 
 
 export default userRouter;
