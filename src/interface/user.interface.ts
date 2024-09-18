@@ -3,6 +3,7 @@ import { IProject } from './project.interface';
 import { USER_ROLE } from '../utils/const';
 
 export interface IUser extends Document {
+  id?: string;
   username: string;
   password: string;
   role: USER_ROLE;
@@ -15,6 +16,7 @@ export interface IUser extends Document {
 }
 
 export interface IUserRegister {
+  id?: string;
   username: string;
   password: string;
   role?: USER_ROLE;

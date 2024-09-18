@@ -19,10 +19,6 @@ const projectSchema = new Schema<IProject>({
     type: String,
     trim: true,
   },
-  status: {
-    type: Schema.Types.ObjectId,
-    ref: 'Status',
-  },
   users: [{
     type: Schema.Types.ObjectId,
     ref: 'User', 
@@ -40,7 +36,14 @@ const projectSchema = new Schema<IProject>({
   process: {
     type: Number,
     default: 0, 
-  }
+  },
+  deletedAt: {
+    type: Date
+  },
+  tasks: [{
+    type: Schema.Types.ObjectId,
+    ref: 'Task', 
+  }],
 }, {
   timestamps: true 
 });
