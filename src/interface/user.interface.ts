@@ -1,6 +1,7 @@
 import { Document } from 'mongoose';
 import { USER_ROLE } from '../utils/const';
 import { IProject } from './project.interface';
+import { ITask } from './task.interface';
 
 export interface IUser extends Document {
   username: string;
@@ -12,7 +13,8 @@ export interface IUser extends Document {
   invite_id?: string;
   is_active: boolean;
   projects?: Array<IProject>;
-  deletedAt?: Date;
+  tasks?: Array<ITask>;
+
 }
 
 export interface IUserUpdate {
@@ -33,7 +35,6 @@ export interface IUserRegister {
   invite_id?: string;
   is_active?: boolean;
   projects?: Array<IProject>;
-  deletedAt?: Date;
 }
 
 export interface ILoginUserInput {

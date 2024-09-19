@@ -10,7 +10,6 @@ export interface IProject {
   end_date?: Date;
   total_task?: number;
   process?: number;
-  deletedAt?: Date;
   tasks?: Array<ITask>
 }
 
@@ -21,7 +20,6 @@ export interface IProjectFilter {
   end_date?: Date;
   total_task?: number;
   process?: number;
-  deletedAt?: Date;
   tasks?: Array<ITask>
 }
 

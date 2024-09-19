@@ -53,9 +53,10 @@ const userSchema = new Schema<IUser>({
     type: Schema.Types.ObjectId,
     ref: 'Project', 
   }],
-  deletedAt: {
-    type: Date
-  },
+  tasks: [{ 
+    type: Schema.Types.ObjectId,
+    ref: 'Task', 
+  }],
 }, {
   timestamps: true, 
 });

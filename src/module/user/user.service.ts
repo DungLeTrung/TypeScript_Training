@@ -11,9 +11,9 @@ const listUsers = async (page: number, limit: number): Promise<IUserListResponse
   try {
     const skip = (page - 1) * limit;
     
-    const total = await User.countDocuments({ deletedAt: null, role: USER_ROLE.USER }).exec();
+    const total = await User.countDocuments({role: USER_ROLE.USER }).exec();
 
-    const users = await User.find({ deletedAt: null, role: USER_ROLE.USER })
+    const users = await User.find({role: USER_ROLE.USER })
       .select('-password')
       .skip(skip)
       .limit(limit)
@@ -31,9 +31,20 @@ const detailUser = async (userId: string): Promise<IUser | null> => {
   }
 
   try {
-    const user = await User.findById({userId, deletedAt: null})
+    const user = await User.findById({_id: userId})
       .select('-password') 
-      .populate('projects', 'name slug start_date end_date total_task process') // Populate projects with selected fields
+      .populate({
+        path: 'projects', 
+        select: 'name slug start_date end_date total_task process' 
+      })
+      .populate({
+        path: 'tasks', 
+        select: 'name project start_date end_date', 
+        populate: {
+          path: 'project',
+          select: 'name slug start_date end_date total_task process' 
+        }
+      })
       .exec();
 
     if (!user) {
@@ -61,10 +72,7 @@ const deleteUser = async (userId: string): Promise<boolean> => {
     }
   
   try {
-    const result = await User.findByIdAndUpdate(
-      userId,
-      { deletedAt: new Date() },
-      { new: true }
+    const result = await User.deleteOne({_id: userId}
     ).exec();
     return result !== null;
   } catch (error) {

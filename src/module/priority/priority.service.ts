@@ -58,6 +58,13 @@ const editPriority = async (_id: string, typeData: IPriority): Promise<any> => {
     throw new Error('Type is required and cannot be empty.');
   }
 
+  const type = typeData.type;
+
+  const existingType = await Priority.findOne({ type }).exec();
+  if (existingType) {
+    throw new Error('Priority already exists');
+  }
+
   if(typeData.position && typeData.position <= 0) { 
     throw new Error('Position must be greater than 0.');
   }

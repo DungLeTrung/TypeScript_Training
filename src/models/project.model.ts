@@ -37,9 +37,6 @@ const projectSchema = new Schema<IProject>({
     type: Number,
     default: 0, 
   },
-  deletedAt: {
-    type: Date
-  },
   tasks: [{
     type: Schema.Types.ObjectId,
     ref: 'Task', 

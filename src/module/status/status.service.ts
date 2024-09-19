@@ -77,6 +77,13 @@ const editStatus = async (_id: string, typeData: IStatus): Promise<any> => {
     throw new Error('Type is required and cannot be empty.');
   }
 
+  const type = typeData.type;
+
+  const existingType = await Status.findOne({ type }).exec();
+  if (existingType) {
+    throw new Error('Status already exists');
+  }
+
   if(typeData.position && typeData.position <= 0) { 
     throw new Error('Position must be greater than 0.');
   }

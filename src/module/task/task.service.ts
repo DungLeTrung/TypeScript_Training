@@ -88,6 +88,12 @@ const createTask =  async (taskData: ITask): Promise<ITask> => {
       { new: true }
     ).exec();
 
+    await User.findByIdAndUpdate(
+      assignees,
+      { $push: { tasks: savedTask._id } },
+      { new: true }
+    ).exec();
+
     return savedTask;
   } catch (error) {
     throw new Error('Failed to create task.');
@@ -212,9 +218,9 @@ const listTasks = async (page: number, limit: number): Promise<ITaskListResponse
   try {
     const skip = (page - 1) * limit;
     
-    const total = await Task.countDocuments({ deletedAt: null }).exec();
+    const total = await Task.countDocuments().exec();
 
-    const tasks = await Task.find({ deletedAt: null })
+    const tasks = await Task.find()
       .populate('project','name slug start_date end_date total_task process')
       .populate('assignees','name email date_of_birth')
       .populate('type','type')

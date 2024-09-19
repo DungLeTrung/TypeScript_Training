@@ -37,9 +37,9 @@ const listProjects = async (page: number, limit: number): Promise<IProjectListRe
   try {
     const skip = (page - 1) * limit;
     
-    const total = await Project.countDocuments({ deletedAt: null }).exec();
+    const total = await Project.countDocuments().exec();
 
-    const projects = await Project.find({ deletedAt: null })
+    const projects = await Project.find()
       .skip(skip)
       .limit(limit)
       .exec();
@@ -97,11 +97,8 @@ const deleteProject = async (projectId: string): Promise<boolean> => {
     }
   
   try {
-    const result = await Project.findByIdAndUpdate(
-      projectId,
-      { deletedAt: new Date() },
-      { new: true }
-    ).exec();
+    const result = await Project.deleteOne(
+      {_id: projectId}).exec();
     return result !== null;
   } catch (error) {
     throw new Error(`Failed to delete project!!!`);
@@ -122,10 +119,7 @@ const addMembersToProject = async (projectId: string, userId: string): Promise<I
     if (!user) {
       throw new Error('User not found.');
     }
-    if (user.deletedAt) {
-      throw new Error('Cannot add a deleted user to the project.');
-    }
-
+    
     if (project.users?.some(user => user.toString() === userId)) {
       throw new Error('User already added to this project.');
     }
