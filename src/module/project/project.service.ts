@@ -57,6 +57,7 @@ const detailProject = async (projectId: string): Promise<IProject | null> => {
 
   try {
     const project = await Project.findById(projectId)
+    .select('-users.password')
     .populate('users')
     .exec();
     if(!project) {

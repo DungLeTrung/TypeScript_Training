@@ -17,16 +17,20 @@ const taskSchema = new Schema<ITask>({
   assignees: {
     type: Schema.Types.ObjectId,
     ref: 'User', 
+    required: true,
   },
-  project_id: {
+  project: {
     type: Schema.Types.ObjectId,
     ref: 'Project',
+    required: true,
   },
   start_date: {
     type: Date,
+    required: true,
   },
   end_date: {
     type: Date,
+    required: true,
   },
   type: {
     type: Schema.Types.ObjectId,
@@ -40,7 +44,7 @@ const taskSchema = new Schema<ITask>({
   },
   priority: {
     type: Schema.Types.ObjectId,
-    ref: 'Status', 
+    ref: 'Priority', 
     required: true, 
   }
 }, {

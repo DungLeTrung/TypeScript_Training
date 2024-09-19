@@ -5,13 +5,29 @@ import { IType } from "./type.interface";
 import { IUser } from "./user.interface";
 
 export interface ITask {
-  _id: string;
   name: string;
   assignees?: IUser;
-  project_id?: IProject;
+  project?: IProject;
   start_date?: Date;
   end_date?: Date;
   type?: IType;
   status?: IStatus;
   priority?: IPriority
+}
+
+export interface IPagination {
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+export interface ITaskResponse {
+  message: string;
+  data: ITask[];
+  pagination: IPagination;
+}
+export interface ITaskListResponse {
+  total: number;
+  tasks: ITask[];
 }

@@ -8,17 +8,15 @@ const statusSchema = new Schema<IStatus> ({
     type: String,
     required: true,
     trim: true, 
-    validate: {
-      validator: function(v: string) {
-        return REGEX.USERNAME.test(v);
-      },
-      message: 'Username must be at least 5 characters long',
-    },
   },
   position: {
     type: Number,
     required: true,
-  }
+  },
+  is_hiding: {
+    type: Boolean,
+    default: false, 
+  },
 }, {
   timestamps: true
 })
