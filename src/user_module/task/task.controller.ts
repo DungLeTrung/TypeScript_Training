@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import taskService from './task.service';
+import taskService from '../task/task.service';
 import { ITask, ITaskResponse } from '../../interface/task.interface';
 
 const createTask = async (req: Request, res: Response): Promise<void> => {
@@ -66,9 +66,9 @@ const deleteTask = async (req: Request, res: Response): Promise<void> => {
 const listTasks = async (req: Request, res: Response) => {
   const page = parseInt(req.query.page as string, 10) || 1; 
   const limit = parseInt(req.query.limit as string, 10) || 10; 
-
+  const project_id = req.params.projectId
   try {
-    const { total, tasks } = await taskService.listTasks(page, limit);
+    const { total, tasks } = await taskService.listTasks(project_id, page, limit);
 
     const response: ITaskResponse = {
       message: 'Task retrieved successfully.',

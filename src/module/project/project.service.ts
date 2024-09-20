@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import { IProject, IProjectListResponse } from "../../interface/project.interface";
 import { Project } from "../../models/project.model";
 import { User } from "../../models/user.model";
+import { Task } from "../../models/task.model";
 
 const createProject = async (projectData: IProject): Promise<IProject> => {
   const userIds = Array.isArray(projectData.users) ? projectData.users : projectData.users ? [projectData.users] : [];
@@ -87,44 +88,54 @@ const editProject = async (_id: string, projectData: IProject): Promise<any> => 
 }
 
 const deleteProject = async (projectId: string): Promise<boolean> => {
-  if (!mongoose.Types.ObjectId.isValid(projectId)) {
-    throw new Error('Invalid project ID format.');
-  }
-
-  const project = await Project.findById(projectId);
-    if(!project) {
-      throw new Error('Project not found')
+  try {
+    if (!mongoose.Types.ObjectId.isValid(projectId)) {
+      throw new Error('Invalid project ID format.');
     }
   
-  try {
+    const project = await Project.findById(projectId);
+      if(!project) {
+        throw new Error('Project not found')
+      }  
+
     const result = await Project.deleteOne(
       {_id: projectId}).exec();
+
+      await Task.updateMany(
+        { project: projectId },
+        { $set: { project: null } }
+      ).exec();
+
+      await User.updateMany(
+        { projects: projectId },
+        { $pull: { projects: projectId } }
+      ).exec();
     return result !== null;
   } catch (error) {
-    throw new Error(`Failed to delete project!!!`);
+    throw new Error(`Failed to delete project: ${(error as Error).message}`);
   }
 };
 
 const addMembersToProject = async (projectId: string, userId: string): Promise<IProject | null> => {
-  if (!mongoose.Types.ObjectId.isValid(projectId) || !mongoose.Types.ObjectId.isValid(userId)) {
-    throw new Error('Invalid project ID or user ID format.');
-  }
-
-  const project = await Project.findById(projectId).exec();
-    if (!project) {
-      throw new Error('Project not found.');
-    }
-
-    const user = await User.findById(userId).exec();
-    if (!user) {
-      throw new Error('User not found.');
-    }
-    
-    if (project.users?.some(user => user.toString() === userId)) {
-      throw new Error('User already added to this project.');
-    }
-
   try {
+    if (!mongoose.Types.ObjectId.isValid(projectId) || !mongoose.Types.ObjectId.isValid(userId)) {
+      throw new Error('Invalid project ID or user ID format.');
+    }
+  
+    const project = await Project.findById(projectId).exec();
+      if (!project) {
+        throw new Error('Project not found.');
+      }
+  
+      const user = await User.findById(userId).exec();
+      if (!user) {
+        throw new Error('User not found.');
+      }
+  
+      if (project.users?.some(user => user.toString() === userId)) {
+        throw new Error('User already added to this project.');
+      }  
+
     const updatedProject = await Project.findByIdAndUpdate(
       projectId,
       { $addToSet: { users: userId } }, 
@@ -137,26 +148,26 @@ const addMembersToProject = async (projectId: string, userId: string): Promise<I
     ).exec();
     return updatedProject;
   } catch (error) {
-    throw new Error(`Failed to add user to project`);
+    throw new Error(`Failed to add user to project: ${(error as Error).message}`);
   }
 }
 
 const deleteMemberFromProject = async (projectId: string, userId: string): Promise<IProject | null> => {
-  if (!mongoose.Types.ObjectId.isValid(projectId) || !mongoose.Types.ObjectId.isValid(userId)) {
-    throw new Error('Invalid project ID or user ID format.');
-  }
-
-  const project = await Project.findById(projectId).exec();
-  if (!project) {
-    throw new Error('Project not found.');
-  }
-
-  const user = await User.findById(userId).exec();
-  if (!user) {
-    throw new Error('User not found.');
-  }
-
   try {
+    if (!mongoose.Types.ObjectId.isValid(projectId) || !mongoose.Types.ObjectId.isValid(userId)) {
+      throw new Error('Invalid project ID or user ID format.');
+    }
+  
+    const project = await Project.findById(projectId).exec();
+    if (!project) {
+      throw new Error('Project not found.');
+    }
+  
+    const user = await User.findById(userId).exec();
+    if (!user) {
+      throw new Error('User not found.');
+    }
+
     const updatedProject = await Project.findByIdAndUpdate(
       projectId,
       { $pull: { users: userId } }, 
@@ -169,16 +180,16 @@ const deleteMemberFromProject = async (projectId: string, userId: string): Promi
 
     return updatedProject;
   } catch (error) {
-    throw new Error(`Failed to remove user from project`);
+    throw new Error(`Failed to remove user from project: ${(error as Error).message}`);
   }
 }
 
 const deleteMembersFromProject = async (projectId: string, userIds: string[]): Promise<IProject | null> => {
-  if (!mongoose.Types.ObjectId.isValid(projectId) || !Array.isArray(userIds) || userIds.some(id => !mongoose.Types.ObjectId.isValid(id))) {
-    throw new Error('Invalid project ID or user ID format.');
-  }
-
   try {
+    if (!mongoose.Types.ObjectId.isValid(projectId) || !Array.isArray(userIds) || userIds.some(id => !mongoose.Types.ObjectId.isValid(id))) {
+      throw new Error('Invalid project ID or user ID format.');
+    }
+
     const updatedProject = await Project.findByIdAndUpdate(
       projectId,
       { $pullAll: { users: userIds } }, 
@@ -191,7 +202,7 @@ const deleteMembersFromProject = async (projectId: string, userIds: string[]): P
 
     return updatedProject;
   } catch (error) {
-    throw new Error(`Failed to remove users from project`);
+    throw new Error(`Failed to remove users from project: ${(error as Error).message}`);
   }
 };
 

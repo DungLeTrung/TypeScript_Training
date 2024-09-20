@@ -1,5 +1,6 @@
 import express from 'express';
-import projectController from '../module/project/project.controller';
+import projectController from '../../module/project/project.controller';
+import { protectedRoute } from '../../middleware/protectedRoute';
 
 const projectRouter = express.Router();
 

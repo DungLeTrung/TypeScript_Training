@@ -16,6 +16,10 @@ export const login = async ({ username, password }: ILoginUserInput, res: Respon
     if(!REGEX.PASSWORD.test(password)){
       throw new Error('Password must be at least 8 characters long and include at least one special character.');
     }
+
+    if(!userExisting?.is_active) {
+      throw new Error('User has been banned!!!.');
+    }
     
     if (!userExisting) {
         throw new Error('Enter username and password!!!');
@@ -31,8 +35,18 @@ export const login = async ({ username, password }: ILoginUserInput, res: Respon
         throw new Error('Secret key for JWT is not defined.');
     }
 
-    const accessToken = jwt.sign({ data: userExisting.username }, secretKey, { expiresIn: '1d' });
-    const refreshToken = jwt.sign({ data: userExisting.username }, secretKey, { expiresIn: '30d' }); 
+    const accessToken = jwt.sign({ 
+      user: {
+        username: userExisting.username,
+        role: userExisting.role, 
+      }
+    }, secretKey, { expiresIn: '1d' });
+    const refreshToken = jwt.sign({ 
+      user: {
+        username: userExisting.username,
+        role: userExisting.role, 
+      }
+    },  secretKey, { expiresIn: '30d' }); 
 
     res.setHeader('Authorization', `Bearer ${accessToken}`);
     const cookieValue = `refreshToken=${refreshToken}; HttpOnly; Max-Age=${30 * 24 * 60 * 60}; Path=/`; 

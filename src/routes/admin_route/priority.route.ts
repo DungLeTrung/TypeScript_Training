@@ -1,5 +1,5 @@
 import express from 'express';
-import priorityController from '../module/priority/priority.controller';
+import priorityController from '../../module/priority/priority.controller';
 
 const priorityRouter = express.Router();
 

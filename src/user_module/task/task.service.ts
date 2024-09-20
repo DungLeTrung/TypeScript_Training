@@ -105,6 +105,11 @@ const editTask = async (_id: string, taskData: ITask): Promise<any> => {
     if (!mongoose.Types.ObjectId.isValid(_id)) {
       throw new Error('Invalid task ID format.');
     }
+
+    const existingTask = await Task.findById(_id);
+    if(!existingTask) {
+      throw new Error('Task is not exist.');
+    }
   
     const { name, assignees, project: project_id, start_date, end_date, type: type_id, status: status_id, priority: priority_id } = taskData;
   
@@ -187,7 +192,7 @@ const editTask = async (_id: string, taskData: ITask): Promise<any> => {
     throw new Error('Project not found.');
   }
 
-  const totalTasksCount = totalTasksCountDoc.total_task != null ? totalTasksCountDoc.total_task + 1 : 1; // Cộng thêm 1 cho tác vụ mới
+  const totalTasksCount = totalTasksCountDoc.total_task != null ? totalTasksCountDoc.total_task : 1;
   const process = closedTasksCount / totalTasksCount;
 
   await Project.findByIdAndUpdate(
@@ -240,13 +245,13 @@ const deleteTask = async (taskId: string): Promise<boolean> => {
   }
 };
 
-const listTasks = async (page: number, limit: number): Promise<ITaskListResponse> => {
+const listTasks = async (project_id: string, page: number, limit: number): Promise<ITaskListResponse> => {
   try {
     const skip = (page - 1) * limit;
     
-    const total = await Task.countDocuments().exec();
+    const total = await Task.countDocuments({project: project_id}).exec();
 
-    const tasks = await Task.find()
+    const tasks = await Task.find({project: project_id})
       .populate('project','name slug start_date end_date total_task process')
       .populate('assignees','name email date_of_birth')
       .populate('type','type')
