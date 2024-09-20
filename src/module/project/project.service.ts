@@ -52,22 +52,22 @@ const listProjects = async (page: number, limit: number): Promise<IProjectListRe
 };
 
 const detailProject = async (projectId: string): Promise<IProject | null> => {
-  if (!mongoose.Types.ObjectId.isValid(projectId)) {
-    throw new Error('Invalid project ID format.');
-  }
-
   try {
-    const project = await Project.findById(projectId)
-    .select('-users.password')
-    .populate('users')
-    .exec();
+    if (!mongoose.Types.ObjectId.isValid(projectId)) {
+      throw new Error('Invalid project ID format.');
+    }
+
+    const project = await Project.findOne({_id: projectId }) 
+      .select('-users.password') 
+      .populate('users', 'name email') 
+      .exec();
     if(!project) {
       throw new Error('Project not found')
     } else {
       return project;
     }
   } catch (error) {
-    throw new Error(`Failed to retrieve project!!!`);
+    throw new Error(`Failed to retrieve project: ${(error as Error).message}`);
   }
 };
 
@@ -206,6 +206,54 @@ const deleteMembersFromProject = async (projectId: string, userIds: string[]): P
   }
 };
 
+const listProjectsByUserId = async (user_id: string, page: number, limit: number): Promise<IProjectListResponse> => {
+  try {
+    if (!mongoose.Types.ObjectId.isValid(user_id)) {
+      throw new Error('Invalid priority ID format.');
+    }
+  
+    const existingUser = await User.findById(user_id);
+    if(!existingUser) {
+      throw new Error('User is not exist.');
+    }
+    
+    const skip = (page - 1) * limit;
+    
+    const total = await Project.countDocuments({users: user_id}).exec();
+
+    const projects = await Project.find({users: user_id})
+    .populate({
+      path: 'users',
+      select: 'name email'
+    })
+    .populate({
+      path: 'tasks',
+      select: 'name assignee start_date end_date status type priority',
+      populate: [
+        {
+          path: 'status',
+          select: 'type',
+        },
+        {
+          path: 'type',
+          select: 'type',
+        },
+        {
+          path: 'priority',
+          select: 'type',
+        },
+      ],
+    })
+      .skip(skip)
+      .limit(limit)
+      .exec();
+
+    return { projects, total };
+  } catch (error) {
+    throw new Error(`Failed to list projects: ${(error as Error).message}`);
+  }
+};
+
 export default {
-  createProject, listProjects, detailProject, editProject, deleteProject, addMembersToProject, deleteMemberFromProject, deleteMembersFromProject
+  createProject, listProjects, detailProject, editProject, deleteProject, addMembersToProject, deleteMemberFromProject, deleteMembersFromProject, listProjectsByUserId
 }

@@ -88,7 +88,32 @@ const listTasks = async (req: Request, res: Response) => {
     });  }
 };
 
+const getTasksByProjectId = async (req: Request, res: Response) => {
+  const page = parseInt(req.query.page as string, 10) || 1; 
+  const limit = parseInt(req.query.limit as string, 10) || 10; 
+  const project_id = req.params.projectId
+  try {
+    const { total, tasks } = await taskService.getTasksByProjectId(project_id, page, limit);
+
+    const response: ITaskResponse = {
+      message: 'Task retrieved successfully.',
+      data: tasks,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+    res.status(200).json(response);
+  } catch (error) {
+    const errorMessage = (error as Error).message || 'An unknown error occurred.';
+    res.status(400).json({
+        message: errorMessage,
+    });  }
+};
+
 
 export default {
-  createTask, editTask, deleteTask, listTasks
+  createTask, editTask, deleteTask, listTasks, getTasksByProjectId
 }
