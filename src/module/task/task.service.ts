@@ -9,10 +9,17 @@ import { Type } from "../../models/type.model";
 import { User } from "../../models/user.model";
 import { USER_ROLE } from "../../utils/const";
 
+enum EStatus {
+  NEW = 'New',
+  PENDING = 'Pending',
+  DONE = 'Done',
+}
+
 const createTask =  async (req: CustomRequest, taskData: ITask): Promise<ITask> => {
   try {
     const { name, project: project_id, start_date, end_date, type: type_id, status: status_id = "66ecece2a53f61dc98c034a2", priority: priority_id } = taskData;
-
+    
+    // check role
     const assignees = taskData.assignees || req?.user?._id;
   
     const startDate = typeof taskData.start_date === 'string' ? new Date(taskData.start_date) : taskData.start_date;
@@ -21,7 +28,8 @@ const createTask =  async (req: CustomRequest, taskData: ITask): Promise<ITask> 
     if (startDate && endDate && startDate >= endDate) {
       throw new Error('start_date must be before end_date.');
     }
-  
+    // find status by name
+    // name: EStatus.NEW
     if (!name || !type_id || !status_id || !priority_id) {
       throw new Error('Name, type, status, and priority are required.');
     }
@@ -31,6 +39,7 @@ const createTask =  async (req: CustomRequest, taskData: ITask): Promise<ITask> 
     }
   
     const user = await User.findById(assignees);
+    // inactive by admin
     if (!user) {
       throw new Error('Assignee not found.');
     }
@@ -135,6 +144,7 @@ const editTask = async (_id: string, req: CustomRequest, taskData: ITask): Promi
   
     const { name, project: project_id, start_date, end_date, type: type_id, status: status_id, priority: priority_id } = taskData;
 
+    // check req?.user?._id;
     const assignees = taskData.assignees || req?.user?._id;
 
     const startDate = typeof start_date === 'string' ? new Date(start_date) : start_date;
@@ -144,6 +154,7 @@ const editTask = async (_id: string, req: CustomRequest, taskData: ITask): Promi
       throw new Error('start_date must be before end_date.');
     }
   
+    //remove check require
     if (!name || !type_id || !status_id || !priority_id) {
       throw new Error('Name, type, status, and priority are required.');
     }
@@ -153,20 +164,23 @@ const editTask = async (_id: string, req: CustomRequest, taskData: ITask): Promi
     }
   
     const user = await User.findById(assignees);
+    // check active
     if (!user) {
       throw new Error('Assignee not found.');
     }
   
+    
     const project = await Project.findById(project_id); 
     if (!project) {
       throw new Error('Project not found.');
     }
-  
+
     const isAssigneeInProject = await Project.exists({
       _id: project_id,
       users: assignees
     });
   
+    // error
     if (!isAssigneeInProject) {
       throw new Error('Assignee is not part of the project.');
     }
@@ -192,6 +206,7 @@ const editTask = async (_id: string, req: CustomRequest, taskData: ITask): Promi
       throw new Error('Task end_date must be within the project start_date and end_date.');
     }
   
+    // inactive
     const type = await Type.findById(type_id);
     if (!type || type.is_hiding) {
       throw new Error('Type not found or is hidden.');
@@ -233,6 +248,7 @@ const editTask = async (_id: string, req: CustomRequest, taskData: ITask): Promi
       { new: true }
     );
 
+    // chekc status
   const closedTasksCount = await Task.countDocuments({ project: project_id, status: '66ecef859777454daa6924ea' });
 
   const totalTasksCountDoc = await Project.findById(project_id).select('total_task').exec();
@@ -270,7 +286,8 @@ const deleteTask = async (req: CustomRequest, taskId: string): Promise<boolean> 
       throw new Error('Task not found.');
     }
 
-    if (user_role !== USER_ROLE.ADMIN && task.assignees !== user_id) {
+    // task.assignees null
+    if (task.assigneeName && user_role !== USER_ROLE.ADMIN && task.assignees !== user_id) {
       throw new Error('You can only delete your own tasks.');
     }
 
@@ -318,17 +335,21 @@ const deleteTask = async (req: CustomRequest, taskId: string): Promise<boolean> 
 
 const listTasks = async (page: number, limit: number): Promise<ITaskListResponse> => {
   try {
+
     const skip = (page - 1) * limit;
     
     const total = await Task.countDocuments().exec();
 
-    const tasks = await Task.find()
+    const tasksRaw = Task.find()
       .populate('project','name slug start_date end_date total_task process')
       .populate('assignees','name email date_of_birth')
       .populate('type','type')
       .populate('status','type')
       .populate('priority','type')
-      .skip(skip)
+      // if (req.params.projectId) {
+      //   tasksRaw.
+      // }
+     const tasks =  await tasksRaw.skip(skip)
       .limit(limit)
       .exec();
 
@@ -360,6 +381,8 @@ const getTasksByProjectId = async (project_id: string, page: number, limit: numb
   }
 };
 
+
+// gộp vào
 const detailTask = async (taskId: string): Promise<ITask | null> => {
   try {
     if (!mongoose.Types.ObjectId.isValid(taskId)) {
