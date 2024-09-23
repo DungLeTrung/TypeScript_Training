@@ -36,17 +36,14 @@ const taskSchema = new Schema<ITask>({
   type: {
     type: Schema.Types.ObjectId,
     ref: 'Type',
-    required: true,
   },
   status: {
     type: Schema.Types.ObjectId,
     ref: 'Status', 
-    required: true,
   },
   priority: {
     type: Schema.Types.ObjectId,
     ref: 'Priority', 
-    required: true, 
   }
 }, {
   timestamps: true 

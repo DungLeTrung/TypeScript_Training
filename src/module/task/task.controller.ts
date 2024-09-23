@@ -71,36 +71,8 @@ const deleteTask = async (req: Request, res: Response): Promise<void> => {
 };
 
 const listTasks = async (req: Request, res: Response) => {
-  const page = parseInt(req.query.page as string, 10) || 1; 
-  const limit = parseInt(req.query.limit as string, 10) || 10; 
-
   try {
-    const { total, tasks } = await taskService.listTasks(page, limit);
-
-    const response: ITaskResponse = {
-      message: 'Task retrieved successfully.',
-      data: tasks,
-      pagination: {
-        total,
-        page,
-        limit,
-        totalPages: Math.ceil(total / limit),
-      },
-    };
-    res.status(200).json(response);
-  } catch (error) {
-    const errorMessage = (error as Error).message || 'An unknown error occurred.';
-    res.status(400).json({
-        message: errorMessage,
-    });  }
-};
-
-const getTasksByProjectId = async (req: Request, res: Response) => {
-  const page = parseInt(req.query.page as string, 10) || 1; 
-  const limit = parseInt(req.query.limit as string, 10) || 10; 
-  const project_id = req.params.projectId
-  try {
-    const { total, tasks } = await taskService.getTasksByProjectId(project_id, page, limit);
+    const { total, tasks, limit, page } = await taskService.listTasks(req);
 
     const response: ITaskResponse = {
       message: 'Task retrieved successfully.',
@@ -137,16 +109,26 @@ const detailTask = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
-
-const getTasksByUserId = async (req: Request, res: Response) => {
+const getTasks = async (req: Request, res: Response) => {
   const page = parseInt(req.query.page as string, 10) || 1; 
   const limit = parseInt(req.query.limit as string, 10) || 10; 
-  const user_id = req.params.userId
+
+  const projectId = req.params.projectId;
+  const userId = req.params.userId;
+
   try {
-    const { total, tasks } = await taskService.getTasksByUserId(user_id, page, limit);
+    const filter: { project_id?: string; user_id?: string } = {};
+    if (projectId) {
+      filter.project_id = projectId;
+    }
+    if (userId) {
+      filter.user_id = userId;
+    }
+
+    const { total, tasks } = await taskService.getTasks(filter, req);
 
     const response: ITaskResponse = {
-      message: 'Task retrieved successfully.',
+      message: 'Tasks retrieved successfully.',
       data: tasks,
       pagination: {
         total,
@@ -159,11 +141,11 @@ const getTasksByUserId = async (req: Request, res: Response) => {
   } catch (error) {
     const errorMessage = (error as Error).message || 'An unknown error occurred.';
     res.status(400).json({
-        message: errorMessage,
-    });  }
+      message: errorMessage,
+    });
+  }
 };
 
-
 export default {
-  createTask, editTask, deleteTask, listTasks, getTasksByProjectId, detailTask, getTasksByUserId
+  createTask, editTask, deleteTask, listTasks, getTasks, detailTask
 }

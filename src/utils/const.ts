@@ -31,3 +31,13 @@ export const parseDate = (dateString: string): Date => {
   }
   return date;
 };
+
+export enum StatusType {
+  Closed = "Closed",
+  New = "New",
+}
+
+export enum FeatureType {
+  Bug = "Bug",
+  Feature = "Feature",
+}

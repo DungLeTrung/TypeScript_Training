@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import { IType, ITypeListResponse } from "../../interface/type.interface";
 import { Type } from "../../models/type.model";
+import { FeatureType } from "../../utils/const";
 
 const createType = async (type: string, color: string ): Promise<IType> => {
   if (!type) {
@@ -41,6 +42,10 @@ const listTypes = async (page: number, limit: number): Promise<ITypeListResponse
 
 const editType = async (_id: string, typeData: IType): Promise<any> => {
   try {
+    const bug = await Type.findOne({type: FeatureType.Bug}).exec();
+
+    const feature = await Type.findOne({type: FeatureType.Feature}).exec();
+
     if (!mongoose.Types.ObjectId.isValid(_id)) {
       throw new Error('Invalid type ID format.');
     }
@@ -61,7 +66,7 @@ const editType = async (_id: string, typeData: IType): Promise<any> => {
       color: validatedColor, 
     };
 
-    if(_id === "66f019e7ede5b143ee90eefb" || _id === "66f019f9ede5b143ee90eefe") {
+    if ((bug && bug._id.toString() === _id) || (feature && feature._id.toString() === _id)) {
       throw new Error('You can not edit classic type');
     }  
 
@@ -77,8 +82,12 @@ const hidingType = async (typeId: string): Promise<boolean> => {
     if (!mongoose.Types.ObjectId.isValid(typeId)) {
       throw new Error('Invalid type ID format.');
     }
+
+    const bug = await Type.findOne({type: FeatureType.Bug}).exec();
+
+    const feature = await Type.findOne({type: FeatureType.Feature}).exec();
   
-    if(typeId === "66f019e7ede5b143ee90eefb" || typeId === "66f019f9ede5b143ee90eefe") {
+    if ((bug && bug._id.toString() === typeId) || (feature && feature._id.toString() === typeId)) {
       throw new Error('You can not hiding classic type');
     }  
 

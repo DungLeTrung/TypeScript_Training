@@ -31,4 +31,6 @@ export interface ITaskResponse {
 export interface ITaskListResponse {
   total: number;
   tasks: ITask[];
+  limit: number;
+  page: number;
 }

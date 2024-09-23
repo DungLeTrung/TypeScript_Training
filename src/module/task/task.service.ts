@@ -7,14 +7,25 @@ import { Status } from "../../models/status.model";
 import { Task } from "../../models/task.model";
 import { Type } from "../../models/type.model";
 import { User } from "../../models/user.model";
-import { USER_ROLE } from "../../utils/const";
+import { StatusType, USER_ROLE } from "../../utils/const";
+import { Request } from "express";
 
 const createTask =  async (req: CustomRequest, taskData: ITask): Promise<ITask> => {
   try {
-    const { name, project: project_id, start_date, end_date, type: type_id, status: status_id = "66ecece2a53f61dc98c034a2", priority: priority_id } = taskData;
+    const status_closed = await Status.findOne({ type: StatusType.Closed }).exec();
 
-    const assignees = taskData.assignees || req?.user?._id;
-  
+    const { name, project: project_id, start_date, end_date, type: type_id, status: status_id = status_closed?._id, priority: priority_id } = taskData;
+    
+    let assignees;
+    if (req.user?.role === USER_ROLE.USER) {
+      assignees = taskData.assignees || req?.user?._id; 
+    } else if (req.user?.role === USER_ROLE.ADMIN) {
+      if (!taskData.assignees) {
+        throw new Error('Admin must provide assignees.');
+      }
+      assignees = taskData.assignees;
+    }  
+
     const startDate = typeof taskData.start_date === 'string' ? new Date(taskData.start_date) : taskData.start_date;
     const endDate = typeof taskData.end_date === 'string' ? new Date(taskData.end_date) : taskData.end_date;
   
@@ -22,17 +33,26 @@ const createTask =  async (req: CustomRequest, taskData: ITask): Promise<ITask> 
       throw new Error('start_date must be before end_date.');
     }
   
-    if (!name || !type_id || !status_id || !priority_id) {
-      throw new Error('Name, type, status, and priority are required.');
+    if (!name ) {
+      throw new Error('Name are required.');
     }
   
     if (typeof name !== 'string' || name.trim() === '') {
       throw new Error('Name must be a non-empty string.');
     }
   
-    const user = await User.findById(assignees);
+    const user = await User.findOne({
+      $or: [
+        { _id: assignees },
+        { _id: req?.user?._id }
+      ]
+    });
+    
     if (!user) {
       throw new Error('Assignee not found.');
+    }
+    if (!user.is_active) {
+      throw new Error('Assignee is not active.');
     }
   
     const project = await Project.findById(project_id);
@@ -60,18 +80,24 @@ const createTask =  async (req: CustomRequest, taskData: ITask): Promise<ITask> 
     if (endDate && (endDate < project.start_date || endDate > project.end_date)) {
       throw new Error('Task end_date must be within the project start_date and end_date.');
     }
-  
-    const type = await Type.findById(type_id);
-    if (!type || type.is_hiding) {
-      throw new Error('Type not found.');
+    
+    if(type_id) {
+      const type = await Type.findById(type_id);
+      if (!type || type.is_hiding) {
+        throw new Error('Type not found.');
+      }
     }
+    
+    if (priority_id) {
+      const priority = await Priority.findById(priority_id);
+      if (!priority || priority.is_hiding) {
+        throw new Error('Priority not found or is hidden.');
+      }
+    }
+
     const status = await Status.findById(status_id);
-    if (!status || type.is_hiding) {
+    if (!status || status.is_hiding) {
       throw new Error('Status not found.');
-    }
-    const priority = await Priority.findById(priority_id);
-    if (!priority || type.is_hiding) {
-      throw new Error('Priority not found.');
     }
   
       const newTask = new Task({
@@ -81,9 +107,9 @@ const createTask =  async (req: CustomRequest, taskData: ITask): Promise<ITask> 
         project,
         start_date,
         end_date,
-        type,
+        type: type_id,
         status,
-        priority
+        priority: priority_id
       });
       const savedTask = await newTask.save();
   
@@ -99,7 +125,7 @@ const createTask =  async (req: CustomRequest, taskData: ITask): Promise<ITask> 
         { new: true }
       ).exec();
 
-      const closedTasksCount = await Task.countDocuments({ project: project_id, status: '66ecef859777454daa6924ea' });
+    const closedTasksCount = await Task.countDocuments({ project: project_id, status: status_closed?._id.toString() });
 
     const totalTasksCountDoc = await Project.findById(project_id).select('total_task').exec();
 
@@ -133,9 +159,17 @@ const editTask = async (_id: string, req: CustomRequest, taskData: ITask): Promi
       throw new Error('Task is not exist.');
     }
   
-    const { name, project: project_id, start_date, end_date, type: type_id, status: status_id, priority: priority_id } = taskData;
+    const { name = existingTask.name, project: project_id, start_date, end_date, type: type_id, status: status_id, priority: priority_id } = taskData;
 
-    const assignees = taskData.assignees || req?.user?._id;
+    let assignees;
+    if (req.user?.role === USER_ROLE.USER) {
+      assignees = taskData.assignees || req?.user?._id; 
+    } else if (req.user?.role === USER_ROLE.ADMIN) {
+      if (!taskData.assignees) {
+        throw new Error('Admin must provide assignees.');
+      }
+      assignees = taskData.assignees;
+    } 
 
     const startDate = typeof start_date === 'string' ? new Date(start_date) : start_date;
     const endDate = typeof end_date === 'string' ? new Date(end_date) : end_date;
@@ -144,17 +178,22 @@ const editTask = async (_id: string, req: CustomRequest, taskData: ITask): Promi
       throw new Error('start_date must be before end_date.');
     }
   
-    if (!name || !type_id || !status_id || !priority_id) {
-      throw new Error('Name, type, status, and priority are required.');
-    }
-  
     if (typeof name !== 'string' || name.trim() === '') {
       throw new Error('Name must be a non-empty string.');
     }
   
-    const user = await User.findById(assignees);
+    const user = await User.findOne({
+      $or: [
+        { _id: assignees },
+        { _id: req?.user?._id }
+      ]
+    });
+    
     if (!user) {
       throw new Error('Assignee not found.');
+    }
+    if (!user.is_active) {
+      throw new Error('Assignee is not active.');
     }
   
     const project = await Project.findById(project_id); 
@@ -192,21 +231,24 @@ const editTask = async (_id: string, req: CustomRequest, taskData: ITask): Promi
       throw new Error('Task end_date must be within the project start_date and end_date.');
     }
   
-    const type = await Type.findById(type_id);
-    if (!type || type.is_hiding) {
-      throw new Error('Type not found or is hidden.');
-    }
-  
-    const status = await Status.findById(status_id);
-    if (!status || status.is_hiding) {
-      throw new Error('Status not found or is hidden.');
-    }
-  
-    const priority = await Priority.findById(priority_id);
-    if (!priority || priority.is_hiding) {
-      throw new Error('Priority not found or is hidden.');
+    if(type_id) {
+      const type = await Type.findById(type_id);
+      if (!type || type.is_hiding) {
+        throw new Error('Type not found.');
+      }
     }
     
+    if (priority_id) {
+      const priority = await Priority.findById(priority_id);
+      if (!priority || priority.is_hiding) {
+        throw new Error('Priority not found or is hidden.');
+      }
+    }
+
+    const status = await Status.findById(status_id);
+    if (!status || status.is_hiding) {
+      throw new Error('Status not found.');
+    }
 
     if (existingTask.assignees && existingTask.assignees !== assignees) {
       await User.findByIdAndUpdate(
@@ -222,9 +264,9 @@ const editTask = async (_id: string, req: CustomRequest, taskData: ITask): Promi
       assigneeName: user.name,
       start_date,
       end_date,
-      type, 
+      type: type_id, 
       status, 
-      priority 
+      priority: priority_id 
     }, { new: true }).exec(); 
 
     await User.findByIdAndUpdate(
@@ -233,7 +275,9 @@ const editTask = async (_id: string, req: CustomRequest, taskData: ITask): Promi
       { new: true }
     );
 
-  const closedTasksCount = await Task.countDocuments({ project: project_id, status: '66ecef859777454daa6924ea' });
+    const status_closed = await Status.findOne({ type: StatusType.Closed }).exec();
+
+  const closedTasksCount = await Task.countDocuments({ project: project_id, status: status_closed?._id.toString() });
 
   const totalTasksCountDoc = await Project.findById(project_id).select('total_task').exec();
 
@@ -292,8 +336,9 @@ const deleteTask = async (req: CustomRequest, taskId: string): Promise<boolean> 
       { _id: userId },
       { $pull: { tasks: taskId } }
     ).exec();
+    const status_closed = await Status.findOne({ type: StatusType.Closed }).exec();
 
-    const closedTasksCount = await Task.countDocuments({ project: projectId, status: '66ecef859777454daa6924ea' });
+    const closedTasksCount = await Task.countDocuments({ project: projectId, status: status_closed?._id.toString() });
 
     const totalTasksCountDoc = await Project.findById(projectId).select('total_task').exec();
 
@@ -316,8 +361,11 @@ const deleteTask = async (req: CustomRequest, taskId: string): Promise<boolean> 
   }
 };
 
-const listTasks = async (page: number, limit: number): Promise<ITaskListResponse> => {
+const listTasks = async (req: Request): Promise<ITaskListResponse> => {
   try {
+    const page = parseInt(req.query.page as string, 10) || 1; 
+    const limit = parseInt(req.query.limit as string, 10) || 10; 
+
     const skip = (page - 1) * limit;
     
     const total = await Task.countDocuments().exec();
@@ -332,29 +380,7 @@ const listTasks = async (page: number, limit: number): Promise<ITaskListResponse
       .limit(limit)
       .exec();
 
-    return { tasks, total };
-  } catch (error) {
-    throw new Error(`Failed to list tasks: ${(error as Error).message}`);
-  }
-};
-
-const getTasksByProjectId = async (project_id: string, page: number, limit: number): Promise<ITaskListResponse> => {
-  try {
-    const skip = (page - 1) * limit;
-    
-    const total = await Task.countDocuments({project: project_id}).exec();
-
-    const tasks = await Task.find({project: project_id})
-      .populate('project','name slug start_date end_date total_task process')
-      .populate('assignees','name email date_of_birth')
-      .populate('type','type')
-      .populate('status','type')
-      .populate('priority','type')
-      .skip(skip)
-      .limit(limit)
-      .exec();
-
-    return { tasks, total };
+    return { tasks, total, limit, page };
   } catch (error) {
     throw new Error(`Failed to list tasks: ${(error as Error).message}`);
   }
@@ -383,23 +409,36 @@ const detailTask = async (taskId: string): Promise<ITask | null> => {
   }
 };
 
-const getTasksByUserId = async (user_id: string, page: number, limit: number): Promise<ITaskListResponse> => {
+const getTasks = async (
+  filter: { project_id?: string; user_id?: string }, 
+  req: Request
+): Promise<ITaskListResponse> => {
   try {
+    const page = parseInt(req.query.page as string, 10) || 1; 
+    const limit = parseInt(req.query.limit as string, 10) || 10; 
     const skip = (page - 1) * limit;
-    
-    const total = await Task.countDocuments({assignees: user_id}).exec();
 
-    const tasks = await Task.find({assignees: user_id})
-      .populate('project','name slug start_date end_date total_task process')
-      .populate('assignees','name email date_of_birth')
-      .populate('type','type')
-      .populate('status','type')
-      .populate('priority','type')
+    // Build the query object based on the provided filter
+    const query: any = {};
+    if (filter.project_id) {
+      query.project = filter.project_id;
+    }
+    if (filter.user_id) {
+      query.assignees = filter.user_id;
+    }
+
+    const total = await Task.countDocuments(query).exec();
+    const tasks = await Task.find(query)
+      .populate('project', 'name slug start_date end_date total_task process')
+      .populate('assignees', 'name email date_of_birth')
+      .populate('type', 'type')
+      .populate('status', 'type')
+      .populate('priority', 'type')
       .skip(skip)
       .limit(limit)
       .exec();
 
-    return { tasks, total };
+    return { tasks, total, limit, page };
   } catch (error) {
     throw new Error(`Failed to list tasks: ${(error as Error).message}`);
   }
@@ -407,5 +446,5 @@ const getTasksByUserId = async (user_id: string, page: number, limit: number): P
 
 
 export default {
-  createTask, editTask, deleteTask, listTasks, getTasksByProjectId, detailTask, getTasksByUserId
+  createTask, editTask, deleteTask, listTasks, getTasks, detailTask
 }
