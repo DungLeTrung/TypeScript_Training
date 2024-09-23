@@ -10,7 +10,7 @@ taskRouter.get('/list-tasks', protectedRoute(['ADMIN']), taskController.listTask
 
 taskRouter.put('/edit-task', protectedRoute(['USER', 'ADMIN']), taskController.editTask);   
 
-taskRouter.delete('/delete-task/:id',  protectedRoute(['ADMIN']), taskController.deleteTask);  
+taskRouter.delete('/delete-task/:id',  protectedRoute(['USER','ADMIN']), taskController.deleteTask);  
 
 taskRouter.get('/get-task/:taskId', taskController.detailTask);   
 

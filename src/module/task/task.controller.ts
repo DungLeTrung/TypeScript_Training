@@ -56,7 +56,7 @@ const deleteTask = async (req: Request, res: Response): Promise<void> => {
     const customReq = req as CustomRequest;
     const taskId = req.params.id;
 
-    const success = await taskService.deleteTask(taskId);
+    const success = await taskService.deleteTask(customReq, taskId);
 
     res.status(200).json({
       message: 'Delete task successfully.',

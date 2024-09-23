@@ -7,6 +7,7 @@ import { Status } from "../../models/status.model";
 import { Task } from "../../models/task.model";
 import { Type } from "../../models/type.model";
 import { User } from "../../models/user.model";
+import { USER_ROLE } from "../../utils/const";
 
 const createTask =  async (req: CustomRequest, taskData: ITask): Promise<ITask> => {
   try {
@@ -255,8 +256,11 @@ const editTask = async (_id: string, req: CustomRequest, taskData: ITask): Promi
   }
 };
 
-const deleteTask = async (taskId: string): Promise<boolean> => {
+const deleteTask = async (req: CustomRequest, taskId: string): Promise<boolean> => {
   try {
+    const user_id = req.user?._id;
+    const user_role = req.user?.role;
+
     if (!mongoose.Types.ObjectId.isValid(taskId)) {
       throw new Error('Invalid task ID format.');
     }
@@ -264,6 +268,10 @@ const deleteTask = async (taskId: string): Promise<boolean> => {
     const task = await Task.findById(taskId).exec();
     if (!task) {
       throw new Error('Task not found.');
+    }
+
+    if (user_role !== USER_ROLE.ADMIN && task.assignees !== user_id) {
+      throw new Error('You can only delete your own tasks.');
     }
 
     const projectId = task.project
