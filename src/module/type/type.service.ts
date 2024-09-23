@@ -44,6 +44,11 @@ const editType = async (_id: string, typeData: IType): Promise<any> => {
     if (!mongoose.Types.ObjectId.isValid(_id)) {
       throw new Error('Invalid type ID format.');
     }
+
+    const existingType = await Type.findOne({_id: _id, is_hiding: true}).exec();
+    if(existingType) {
+      throw new Error('Invalid type Id');
+    }
   
     if (!typeData.type || typeof typeData.type !== 'string' || typeData.type.trim() === '') {
       throw new Error('Type is required and cannot be empty.');

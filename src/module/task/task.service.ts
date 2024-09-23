@@ -97,6 +97,23 @@ const createTask =  async (req: CustomRequest, taskData: ITask): Promise<ITask> 
         { $push: { tasks: savedTask._id } },
         { new: true }
       ).exec();
+
+      const closedTasksCount = await Task.countDocuments({ project: project_id, status: '66ecef859777454daa6924ea' });
+
+    const totalTasksCountDoc = await Project.findById(project_id).select('total_task').exec();
+
+    if (!totalTasksCountDoc) {
+      throw new Error('Project not found.');
+    }
+
+    const totalTasksCount = totalTasksCountDoc.total_task != null ? totalTasksCountDoc.total_task : 1;
+    const process = closedTasksCount / totalTasksCount;
+
+    await Project.findByIdAndUpdate(
+      project_id,
+      { process },
+      { new: true }
+    );
   
       return savedTask;
     } catch (error) {
@@ -188,6 +205,15 @@ const editTask = async (_id: string, req: CustomRequest, taskData: ITask): Promi
     if (!priority || priority.is_hiding) {
       throw new Error('Priority not found or is hidden.');
     }
+    
+
+    if (existingTask.assignees && existingTask.assignees !== assignees) {
+      await User.findByIdAndUpdate(
+        existingTask.assignees, 
+        { $pull: { tasks: _id } }, 
+        { new: true }
+      );
+    }
 
     const updatedTask = await Task.findByIdAndUpdate(_id, {
       name,
@@ -199,6 +225,12 @@ const editTask = async (_id: string, req: CustomRequest, taskData: ITask): Promi
       status, 
       priority 
     }, { new: true }).exec(); 
+
+    await User.findByIdAndUpdate(
+      assignees, 
+      { $push: { tasks: _id } }, 
+      { new: true }
+    );
 
   const closedTasksCount = await Task.countDocuments({ project: project_id, status: '66ecef859777454daa6924ea' });
 
@@ -253,6 +285,22 @@ const deleteTask = async (taskId: string): Promise<boolean> => {
       { $pull: { tasks: taskId } }
     ).exec();
 
+    const closedTasksCount = await Task.countDocuments({ project: projectId, status: '66ecef859777454daa6924ea' });
+
+    const totalTasksCountDoc = await Project.findById(projectId).select('total_task').exec();
+
+    if (!totalTasksCountDoc) {
+      throw new Error('Project not found.');
+    }
+
+    const totalTasksCount = totalTasksCountDoc.total_task != null ? totalTasksCountDoc.total_task : 1;
+    const process = closedTasksCount / totalTasksCount;
+
+    await Project.findByIdAndUpdate(
+      projectId,
+      { process },
+      { new: true }
+    );
 
     return true;
   } catch (error) {
@@ -313,6 +361,9 @@ const detailTask = async (taskId: string): Promise<ITask | null> => {
     const project = await Task.findOne({_id: taskId }) 
       .select('-users.password') 
       .populate('assignees', 'name email') 
+      .populate('type', 'type')
+      .populate('priority', 'type')
+      .populate('status', 'type')
       .exec();
     if(!project) {
       throw new Error('Task not found')

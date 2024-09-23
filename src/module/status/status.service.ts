@@ -1,6 +1,4 @@
 import mongoose from "mongoose";
-import { IType } from "../../interface/type.interface";
-import { Type } from "../../models/type.model";
 import { IStatus, IStatusListResponse } from "../../interface/status.interface";
 import { Status } from "../../models/status.model";
 
@@ -64,10 +62,15 @@ const editStatus = async (_id: string, typeData: IStatus): Promise<any> => {
     if (!mongoose.Types.ObjectId.isValid(_id)) {
       throw new Error('Invalid status ID format.');
     }
+
+    const existingStatus = await Status.findOne({_id: _id, is_hiding: true}).exec();
+    if(existingStatus) {
+      throw new Error('Invalid status Id');
+    }
   
     if (!typeData.type || typeof typeData.type !== 'string' || typeData.type.trim() === '') {
       throw new Error('Type is required and cannot be empty.');
-    }
+    }    
 
     const type = typeData.type;
   
@@ -84,11 +87,12 @@ const editStatus = async (_id: string, typeData: IStatus): Promise<any> => {
       throw new Error('You can not edit classic status');
     }
 
-    const existingStatusClosed = await Status.findOne({ _id: _id }).exec();
+    const existingStatusClosed = await Status.findOne({ _id: "66ecef859777454daa6924ea" }).exec();
     if (!existingStatusClosed) {
       throw new Error('Status Closed not found.'); 
     }
     
+    console.log(existingStatusClosed.position)
     if (typeData.position >= existingStatusClosed.position) {
       throw new Error('Position must be smaller than the position of Closed status.');
     }

@@ -55,6 +55,11 @@ const editPriority = async (_id: string, typeData: IPriority): Promise<any> => {
     if (!mongoose.Types.ObjectId.isValid(_id)) {
       throw new Error('Invalid priority ID format.');
     }
+
+    const existingPriority = await Priority.findOne({_id: _id, is_hiding: true}).exec();
+    if(existingPriority) {
+      throw new Error('Invalid priority Id');
+    }
   
     if (!typeData.type || typeof typeData.type !== 'string' || typeData.type.trim() === '') {
       throw new Error('Type is required and cannot be empty.');

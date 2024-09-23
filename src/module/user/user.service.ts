@@ -6,6 +6,7 @@ import { IUser, IUserListResponse, IUserUpdate } from "../../interface/user.inte
 import { parseDate, USER_ROLE } from "../../utils/const";
 import { v4 as uuidv4 } from 'uuid';
 import { REGEX } from "../../utils/regex";
+import { Task } from "../../models/task.model";
 
 const listUsers = async (page: number, limit: number): Promise<IUserListResponse> => {
   try {
@@ -72,11 +73,21 @@ const deleteUser = async (userId: string): Promise<boolean> => {
     }
   
   try {
+    await Project.updateMany(
+      { users: userId },
+      { $pull: { users: userId } }
+    ).exec();
+
+    await Task.updateMany(
+      { assignees: userId },
+      { $pull: { assignees: userId } }
+    ).exec();
+
     const result = await User.deleteOne({_id: userId}
     ).exec();
     return result !== null;
   } catch (error) {
-    throw new Error(`Failed to delete user!!!`);
+    throw new Error(`Failed to delete user: ${(error as Error).message}`);
   }
 };
 

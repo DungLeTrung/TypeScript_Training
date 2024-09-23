@@ -78,6 +78,24 @@ const detailProject = async (projectId: string): Promise<IProject | null> => {
     const project = await Project.findOne({_id: projectId }) 
       .select('-users.password') 
       .populate('users', 'name email') 
+      .populate({
+        path: 'tasks',
+        select: 'name assignees start_date end_date status type priority',
+        populate: [
+          {
+            path: 'status',
+            select: 'type',
+          },
+          {
+            path: 'type',
+            select: 'type',
+          },
+          {
+            path: 'priority',
+            select: 'type',
+          },
+        ],
+      })      
       .exec();
     if(!project) {
       throw new Error('Project not found')
@@ -246,7 +264,7 @@ const listProjectsByUserId = async (user_id: string, page: number, limit: number
     })
     .populate({
       path: 'tasks',
-      select: 'name assignee start_date end_date status type priority',
+      select: 'name assignees start_date end_date status type priority',
       populate: [
         {
           path: 'status',

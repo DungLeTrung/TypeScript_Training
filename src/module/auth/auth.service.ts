@@ -10,26 +10,17 @@ import { Project } from '../../models/project.model';
 
 export const login = async ({ username, password }: ILoginUserInput, res: Response): Promise<ILoginResult> => {
     const userExisting: IUser | null = await User.findOne({ username });
-
-    if (!REGEX.USERNAME.test(username)) {
-      throw new Error('Username must be greater than 5 characters.');
-    }
-
-    if(!REGEX.PASSWORD.test(password)){
-      throw new Error('Password must be at least 8 characters long and include at least one special character.');
+    if (!userExisting) {
+      throw new Error('Wrong user!!!');
     }
 
     if(!userExisting?.is_active) {
       throw new Error('User has been banned!!!.');
     }
-    
-    if (!userExisting) {
-        throw new Error('Enter username and password!!!');
-    }
 
     const isMatch = await bcrypt.compare(password, userExisting.password);
     if (!isMatch) {
-        throw new Error('Incorrect email or password.');
+        throw new Error('Incorrect username or password.');
     }
 
     const secretKey = process.env.SECRET_KEY_JWT;
@@ -64,131 +55,70 @@ export const login = async ({ username, password }: ILoginUserInput, res: Respon
     };
 };
 
-const register = async ({username, password, name, email, date_of_birth, invite_id
+export const register = async ({
+  username,
+  password,
+  name,
+  email,
+  date_of_birth,
+  invite_id,
 }: IUserRegister): Promise<any> => {
-  if (!username || !password) {
-    throw new Error('Username and password must be provided.');
-  }
-
-  if (!date_of_birth) {
-    throw new Error('Date of birth must be provided.');
-  }
-
-  const dateOfBirth = typeof date_of_birth === 'string' ? new Date(date_of_birth) : date_of_birth;
-
-  if (dateOfBirth && dateOfBirth > new Date()) {
-    throw new Error('date_of_birth cannot be a future date.');
-  }
-
-  const userExisting = await User.findOne({ username }).exec();
-  if (userExisting != null) {
-    throw new Error('User already exists.');
-  }
-
-  const userEmail = await User.findOne({ email }).exec();
-  if (userEmail != null) {
-    throw new Error('Email is empty or duplicate!!!');
-  }
-
-  const secretKey = process.env.SALT_ROUNDS;
-  if (!secretKey) {
-    throw new Error('Secret key is not defined.');
-  }
-
-  const saltRounds = parseInt(secretKey);
-  if (isNaN(saltRounds)) {
-    throw new Error('Secret key is not a valid number.');
-  }
-
-  if (!REGEX.PASSWORD.test(password)) {
-    throw new Error('Password must be at least 8 characters long and include at least one special character.');
-  }
-
-  const hashPassword = await bcrypt.hash(password, saltRounds);
-
-  const newUser = await User.create({
-    username,
-    name,
-    email,
-    date_of_birth: dateOfBirth,
-    invite_id,
-    password: hashPassword,
-    role: USER_ROLE.USER,
-  });
-
-  return {
-    ...newUser.toObject(),
-    password: 'Private',
-  };
-};
-
-const createAccountThroughInviteId = async (userData: { username: string, password: string, name: string, date_of_birth: Date, email: string, invite_id: string }): Promise<IUserRegister> => {
-  const { username, password, name, date_of_birth, email, invite_id } = userData;
-
   try {
-    const invite = await Invite.findOne({ invite_id, is_used: false });
-    if (!invite) {
-      throw new Error('Invalid or already used invite ID.');
+    const existingUser = await User.findOne({ $or: [{ username }, { email }] }).exec();
+    if (existingUser) {
+      throw new Error('Username or email already exists.');
     }
-  
-    const existingUser = await User.findOne({ $or: [{ username }, { email }] });
-      if (existingUser) {
-        throw new Error('Username or email already exists.');
+    
+    const saltRounds = parseInt(process.env.SALT_ROUNDS ?? '10');
+    const hashPassword = await bcrypt.hash(password, saltRounds);
+
+    if (invite_id) {
+      const invite = await Invite.findOne({ invite_id, is_used: false });
+      if (!invite) {
+        throw new Error('Invalid or already used invite ID.');
+      }
+
+      const newUser = new User({
+        username,
+        password: hashPassword,
+        name,
+        date_of_birth,
+        email,
+        role: USER_ROLE.USER,
+        projects: [invite.project], 
+      });
+
+      const savedUser = await newUser.save();
+
+      invite.is_used = true;
+      await invite.save();
+
+      await Project.findByIdAndUpdate(invite.project, { $push: { users: savedUser._id } }, { new: true });
+
+      return {
+        ...savedUser.toObject(),
+        password: 'Private',
+      };
+
+    } else {
+      const newUser = await User.create({
+        username,
+        name,
+        email,
+        date_of_birth,
+        password: hashPassword,
+        role: USER_ROLE.USER,
+      });
+
+      return {
+        ...newUser.toObject(),
+        password: 'Private',
+      };
     }
-
-    const dateOfBirth = typeof date_of_birth === 'string' ? new Date(date_of_birth) : date_of_birth;
-
-    if (dateOfBirth && dateOfBirth > new Date()) {
-      throw new Error('date_of_birth cannot be a future date.');
-    }
-
-    const secretKey = process.env.SALT_ROUNDS;
-  if (!secretKey) {
-    throw new Error('Secret key is not defined.');
-  }
-
-  const saltRounds = parseInt(secretKey);
-  if (isNaN(saltRounds)) {
-    throw new Error('Secret key is not a valid number.');
-  }
-
-  if (!REGEX.PASSWORD.test(password)) {
-    throw new Error('Password must be at least 8 characters long and include at least one special character.');
-  }
-
-  const hashPassword = await bcrypt.hash(password, saltRounds);
-
-    const newUser = new User({
-      username,
-      password: hashPassword,
-      name,
-      date_of_birth,
-      email,
-      role: USER_ROLE.USER, 
-      projects: [invite.project] 
-    });
-
-    const savedUser = await newUser.save();
-
-    invite.is_used = true;
-    await invite.save();
-
-    await Project.findByIdAndUpdate(
-      invite.project, 
-      { $push: { users: savedUser._id } }, 
-      { new: true }
-    );
-
-    return {
-      ...savedUser.toObject(),
-      password: 'Private',
-    };
-
   } catch (error) {
-    throw new Error(`Failed to create user with invite: ${(error as Error).message}`);
+    throw new Error(`${(error as Error).message}`);
   }
 };
-
 export default {
-  login, register, createAccountThroughInviteId
+  login, register
 };
