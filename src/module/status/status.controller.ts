@@ -90,7 +90,24 @@ const hidingStatus = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
+const getStatusById = async (req: Request, res: Response): Promise<void> => {
+  const priorityId = req.params.id;
+  try {
+    const success = await statusService.getStatusById(priorityId);
+
+    res.status(200).json({
+      message: 'get status successfully.',
+      data: success,
+    });
+  } catch (error) {
+    const errorMessage = (error as Error).message || 'An unknown error occurred.';
+      res.status(400).json({
+          message: errorMessage,
+      });
+  }
+};
+
 
 export default {
-  createStatus, listStatuses, editStatus, hidingStatus
+  createStatus, listStatuses, editStatus, hidingStatus, getStatusById
 };

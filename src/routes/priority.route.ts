@@ -10,6 +10,8 @@ priorityRouter.get('/list-priorities', protectedRoute(['ADMIN']), priorityContro
 
 priorityRouter.put('/edit-priority', protectedRoute(['ADMIN']), priorityController.editPriority);   
 
+priorityRouter.get('/get-priority/:id', protectedRoute(['ADMIN']), priorityController.getPriorityById);   
+
 priorityRouter.put('/hiding-priority/:id', protectedRoute(['ADMIN']), priorityController.hidingPriority);   
 
 

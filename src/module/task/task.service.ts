@@ -1,15 +1,18 @@
 import mongoose from "mongoose";
+import { CustomRequest } from "../../interface/config";
 import { ITask, ITaskListResponse } from "../../interface/task.interface";
 import { Priority } from "../../models/priority.model";
+import { Project } from "../../models/project.model";
 import { Status } from "../../models/status.model";
 import { Task } from "../../models/task.model";
 import { Type } from "../../models/type.model";
 import { User } from "../../models/user.model";
-import { Project } from "../../models/project.model";
 
-const createTask =  async (taskData: ITask): Promise<ITask> => {
+const createTask =  async (req: CustomRequest, taskData: ITask): Promise<ITask> => {
   try {
-    const { name, assignees, project: project_id, start_date, end_date, type: type_id, status: status_id = "66ecece2a53f61dc98c034a2", priority: priority_id } = taskData;
+    const { name, project: project_id, start_date, end_date, type: type_id, status: status_id = "66ecece2a53f61dc98c034a2", priority: priority_id } = taskData;
+
+    const assignees = taskData.assignees || req?.user?._id;
   
     const startDate = typeof taskData.start_date === 'string' ? new Date(taskData.start_date) : taskData.start_date;
     const endDate = typeof taskData.end_date === 'string' ? new Date(taskData.end_date) : taskData.end_date;
@@ -73,6 +76,7 @@ const createTask =  async (taskData: ITask): Promise<ITask> => {
       const newTask = new Task({
         name,
         assignees,
+        assigneeName: user.name,
         project,
         start_date,
         end_date,
@@ -100,7 +104,7 @@ const createTask =  async (taskData: ITask): Promise<ITask> => {
     }
 };
 
-const editTask = async (_id: string, taskData: ITask): Promise<any> => {
+const editTask = async (_id: string, req: CustomRequest, taskData: ITask): Promise<any> => {
   try {
     if (!mongoose.Types.ObjectId.isValid(_id)) {
       throw new Error('Invalid task ID format.');
@@ -111,8 +115,10 @@ const editTask = async (_id: string, taskData: ITask): Promise<any> => {
       throw new Error('Task is not exist.');
     }
   
-    const { name, assignees, project: project_id, start_date, end_date, type: type_id, status: status_id, priority: priority_id } = taskData;
-  
+    const { name, project: project_id, start_date, end_date, type: type_id, status: status_id, priority: priority_id } = taskData;
+
+    const assignees = taskData.assignees || req?.user?._id;
+
     const startDate = typeof start_date === 'string' ? new Date(start_date) : start_date;
     const endDate = typeof end_date === 'string' ? new Date(end_date) : end_date;
   
@@ -146,6 +152,15 @@ const editTask = async (_id: string, taskData: ITask): Promise<any> => {
     if (!isAssigneeInProject) {
       throw new Error('Assignee is not part of the project.');
     }
+
+    const isTaskInProject = await Project.exists({
+      _id: project_id,
+      tasks: _id
+    });
+
+    if (!isTaskInProject) {
+      throw new Error('Task is not part of the project.');
+    }
   
     if (!project.start_date || !project.end_date) {
       throw new Error('Project start_date or end_date is missing.');
@@ -177,6 +192,7 @@ const editTask = async (_id: string, taskData: ITask): Promise<any> => {
     const updatedTask = await Task.findByIdAndUpdate(_id, {
       name,
       assignees,
+      assigneeName: user.name,
       start_date,
       end_date,
       type, 
@@ -184,7 +200,7 @@ const editTask = async (_id: string, taskData: ITask): Promise<any> => {
       priority 
     }, { new: true }).exec(); 
 
-    const closedTasksCount = await Task.countDocuments({ project: project_id, status: '66ecef859777454daa6924ea' });
+  const closedTasksCount = await Task.countDocuments({ project: project_id, status: '66ecef859777454daa6924ea' });
 
   const totalTasksCountDoc = await Project.findById(project_id).select('total_task').exec();
 
@@ -288,7 +304,49 @@ const getTasksByProjectId = async (project_id: string, page: number, limit: numb
   }
 };
 
+const detailTask = async (taskId: string): Promise<ITask | null> => {
+  try {
+    if (!mongoose.Types.ObjectId.isValid(taskId)) {
+      throw new Error('Invalid project ID format.');
+    }
+
+    const project = await Task.findOne({_id: taskId }) 
+      .select('-users.password') 
+      .populate('assignees', 'name email') 
+      .exec();
+    if(!project) {
+      throw new Error('Task not found')
+    } else {
+      return project;
+    }
+  } catch (error) {
+    throw new Error(`Failed to retrieve task: ${(error as Error).message}`);
+  }
+};
+
+const getTasksByUserId = async (user_id: string, page: number, limit: number): Promise<ITaskListResponse> => {
+  try {
+    const skip = (page - 1) * limit;
+    
+    const total = await Task.countDocuments({assignees: user_id}).exec();
+
+    const tasks = await Task.find({assignees: user_id})
+      .populate('project','name slug start_date end_date total_task process')
+      .populate('assignees','name email date_of_birth')
+      .populate('type','type')
+      .populate('status','type')
+      .populate('priority','type')
+      .skip(skip)
+      .limit(limit)
+      .exec();
+
+    return { tasks, total };
+  } catch (error) {
+    throw new Error(`Failed to list tasks: ${(error as Error).message}`);
+  }
+};
+
 
 export default {
-  createTask, editTask, deleteTask, listTasks, getTasksByProjectId
+  createTask, editTask, deleteTask, listTasks, getTasksByProjectId, detailTask, getTasksByUserId
 }

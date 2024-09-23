@@ -43,7 +43,7 @@ export const login = async ({ username, password }: ILoginUserInput, res: Respon
         username: userExisting.username,
         role: userExisting.role, 
       }
-    }, secretKey, { expiresIn: '1d' });
+    }, secretKey, { expiresIn: '5d' });
     const refreshToken = jwt.sign({ 
       user: {
         _id: userExisting._id,

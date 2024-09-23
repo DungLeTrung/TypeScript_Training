@@ -41,6 +41,24 @@ const listProjects = async (page: number, limit: number): Promise<IProjectListRe
     const total = await Project.countDocuments().exec();
 
     const projects = await Project.find()
+      .populate('users', 'name email') 
+      .populate({
+        path: 'tasks', 
+        select: 'name status priority type start_date end_date', 
+        populate: [{
+          path: 'type',
+          select: 'type' 
+        },
+        {
+          path: 'status',
+          select: 'type' 
+        },
+        {
+          path: 'priority',
+          select: 'type' 
+        },
+        ]
+      })    
       .skip(skip)
       .limit(limit)
       .exec();

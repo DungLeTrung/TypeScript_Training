@@ -5,29 +5,30 @@ import { IPriority, IPriorityListResponse } from "../../interface/priority.inter
 import { Priority } from "../../models/priority.model";
 
 const createPriority = async (type: string, position: number ): Promise<IPriority> => {
-  if (!type) {
-    throw new Error('Priority is required.');
-  }
-
-  if(position && position <= 0) { 
-    throw new Error('Position must be greater than 0.');
-  }
-
-  const existingType = await Priority.findOne({ type }).exec();
-  if (existingType) {
-    throw new Error('Priority already exists');
-  }
-
-  const existingPosition = await Priority.findOne({ position }).exec();
-  if (existingPosition) {
-    throw new Error('Position already exists');
-  }
-
   try {
+    if (!type) {
+      throw new Error('Priority is required.');
+    }
+  
+    if(position && position <= 0) { 
+      throw new Error('Position must be greater than 0.');
+    }
+  
+    const existingType = await Priority.findOne({ type }).exec();
+    if (existingType) {
+      throw new Error('Priority already exists');
+    }
+  
+    const existingPosition = await Priority.findOne({ position }).exec();
+    if (existingPosition) {
+      throw new Error('Position already exists');
+    }
+  
+
     const newPriority = new Priority({ type, position, is_hiding: false });
     return await newPriority.save();
-  } catch (err) {
-    throw new Error('Failed to create priority!!!');
+  } catch (error) {
+    throw new Error(`Failed to create priority: ${(error as Error).message}`);
   }
 };
 
@@ -50,46 +51,46 @@ const listPriorities = async (page: number, limit: number): Promise<IPriorityLis
 };
 
 const editPriority = async (_id: string, typeData: IPriority): Promise<any> => {
-  if (!mongoose.Types.ObjectId.isValid(_id)) {
-    throw new Error('Invalid priority ID format.');
-  }
-
-  if (!typeData.type || typeof typeData.type !== 'string' || typeData.type.trim() === '') {
-    throw new Error('Type is required and cannot be empty.');
-  }
-
-  const type = typeData.type;
-
-  const existingType = await Priority.findOne({ type }).exec();
-  if (existingType) {
-    throw new Error('Priority already exists');
-  }
-
-  if(typeData.position && typeData.position <= 0) { 
-    throw new Error('Position must be greater than 0.');
-  }
-
-  const validatedPosition = typeData.position && typeData.position !== null ? typeData.position : undefined;
-
-  const updateData: Partial<IPriority> = {
-    ...typeData,
-    position: validatedPosition, 
-  };
-
   try {
+    if (!mongoose.Types.ObjectId.isValid(_id)) {
+      throw new Error('Invalid priority ID format.');
+    }
+  
+    if (!typeData.type || typeof typeData.type !== 'string' || typeData.type.trim() === '') {
+      throw new Error('Type is required and cannot be empty.');
+    }
+  
+    const type = typeData.type;
+  
+    const existingType = await Priority.findOne({ type }).exec();
+    if (existingType) {
+      throw new Error('Priority already exists');
+    }
+  
+    if(typeData.position && typeData.position <= 0) { 
+      throw new Error('Position must be greater than 0.');
+    }
+  
+    const validatedPosition = typeData.position && typeData.position !== null ? typeData.position : undefined;
+  
+    const updateData: Partial<IPriority> = {
+      ...typeData,
+      position: validatedPosition, 
+    };
+
     const updatedType = await Priority.findByIdAndUpdate(_id, updateData, { new: true }).exec();
     return updatedType;
   } catch (error) {
-    throw new Error(`Failed to update Priority`);
+    throw new Error(`Failed to update priority: ${(error as Error).message}`);
   }
 }
 
 const hidingPriority = async (priorityId: string): Promise<boolean> => {
-  if (!mongoose.Types.ObjectId.isValid(priorityId)) {
-    throw new Error('Invalid Priority ID format.');
-  }
-
   try {
+    if (!mongoose.Types.ObjectId.isValid(priorityId)) {
+      throw new Error('Invalid Priority ID format.');
+    }
+
     const type = await Priority.findById(priorityId).exec();
     if (!type) {
       throw new Error('Priority not found.');
@@ -103,10 +104,28 @@ const hidingPriority = async (priorityId: string): Promise<boolean> => {
 
     return updatedType !== null;
   } catch (error) {
-    throw new Error(`Failed to hiding priority`);
+    throw new Error(`Failed to hiding priority: ${(error as Error).message}`);
+  }
+};
+
+const getPriorityById = async (priorityId: string): Promise<IPriority | null> => {
+  try {
+    if (!mongoose.Types.ObjectId.isValid(priorityId)) {
+      throw new Error('Invalid priority ID format.');
+    }
+
+    const priority = await Priority.findOne({_id: priorityId, is_hiding: false }) 
+      .exec();
+    if(!priority) {
+      throw new Error('Priority not found')
+    } else {
+      return priority;
+    }
+  } catch (error) {
+    throw new Error(`Failed to retrieve priority: ${(error as Error).message}`);
   }
 };
 
 export default {
-  createPriority, listPriorities, editPriority, hidingPriority
+  createPriority, listPriorities, editPriority, hidingPriority, getPriorityById
 }

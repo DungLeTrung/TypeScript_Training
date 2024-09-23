@@ -2,11 +2,6 @@ import mongoose from "mongoose";
 import { IType, ITypeListResponse } from "../../interface/type.interface";
 import { Type } from "../../models/type.model";
 
-const defaultTypes = [
-  { type: 'Bug', color: '#FF0000', is_hiding: false },
-  { type: 'Feature', color: '#00CC00', is_hiding: false }
-];
-
 const createType = async (type: string, color: string ): Promise<IType> => {
   if (!type) {
     throw new Error('Type is required.');
@@ -20,8 +15,8 @@ const createType = async (type: string, color: string ): Promise<IType> => {
   try {
     const newTaskType = new Type({ type, color, is_hiding: false });
     return await newTaskType.save();
-  } catch (err) {
-    throw new Error('Failed to create type!!!');
+  } catch (error) {
+    throw new Error(`Failed to create type: ${(error as Error).message}`);
   }
 };
 
@@ -32,48 +27,56 @@ const listTypes = async (page: number, limit: number): Promise<ITypeListResponse
     const total = await Type.countDocuments({ is_hiding: false }).exec();
 
     const dbTaskTypes = await Type.find({is_hiding: false}).exec();
-    const allTypes = [...defaultTypes, ...dbTaskTypes];
+    const allTypes = [...dbTaskTypes];
 
     const paginatedStatuses = allTypes.slice(skip, skip + limit);
     
-    const totalStatuses = total + defaultTypes.length;
+    const totalStatuses = total;
 
     return {types: paginatedStatuses, total: totalStatuses};
-  } catch (err) {
-    throw new Error('Failed to list types!!!');
+  } catch (error) {
+    throw new Error(`Failed to list types: ${(error as Error).message}`);
   }
 };
 
 const editType = async (_id: string, typeData: IType): Promise<any> => {
-  if (!mongoose.Types.ObjectId.isValid(_id)) {
-    throw new Error('Invalid type ID format.');
-  }
-
-  if (!typeData.type || typeof typeData.type !== 'string' || typeData.type.trim() === '') {
-    throw new Error('Type is required and cannot be empty.');
-  }
-
-  const validatedColor = typeData.color && typeData.color.trim() !== '' ? typeData.color : undefined;
-
-  const updateData: Partial<IType> = {
-    ...typeData,
-    color: validatedColor, 
-  };
-
   try {
+    if (!mongoose.Types.ObjectId.isValid(_id)) {
+      throw new Error('Invalid type ID format.');
+    }
+  
+    if (!typeData.type || typeof typeData.type !== 'string' || typeData.type.trim() === '') {
+      throw new Error('Type is required and cannot be empty.');
+    }
+  
+    const validatedColor = typeData.color && typeData.color.trim() !== '' ? typeData.color : undefined;
+  
+    const updateData: Partial<IType> = {
+      ...typeData,
+      color: validatedColor, 
+    };
+
+    if(_id === "66f019e7ede5b143ee90eefb" || _id === "66f019f9ede5b143ee90eefe") {
+      throw new Error('You can not edit classic type');
+    }  
+
     const updatedType = await Type.findByIdAndUpdate(_id, updateData, { new: true }).exec();
     return updatedType;
   } catch (error) {
-    throw new Error(`Failed to update type`);
+    throw new Error(`Failed to update type: ${(error as Error).message}`);
   }
 }
 
 const hidingType = async (typeId: string): Promise<boolean> => {
-  if (!mongoose.Types.ObjectId.isValid(typeId)) {
-    throw new Error('Invalid type ID format.');
-  }
-
   try {
+    if (!mongoose.Types.ObjectId.isValid(typeId)) {
+      throw new Error('Invalid type ID format.');
+    }
+  
+    if(typeId === "66f019e7ede5b143ee90eefb" || typeId === "66f019f9ede5b143ee90eefe") {
+      throw new Error('You can not hiding classic type');
+    }  
+
     const type = await Type.findById(typeId).exec();
     if (!type) {
       throw new Error('Type not found.');
@@ -91,6 +94,24 @@ const hidingType = async (typeId: string): Promise<boolean> => {
   }
 };
 
+const getTypeById = async (typeId: string): Promise<IType | null> => {
+  try {
+    if (!mongoose.Types.ObjectId.isValid(typeId)) {
+      throw new Error('Invalid type ID format.');
+    }
+
+    const priority = await Type.findOne({_id: typeId, is_hiding: false }) 
+      .exec();
+    if(!priority) {
+      throw new Error('Type not found')
+    } else {
+      return priority;
+    }
+  } catch (error) {
+    throw new Error(`Failed to retrieve type: ${(error as Error).message}`);
+  }
+};
+
 export default {
-  createType, listTypes, editType, hidingType
+  createType, listTypes, editType, hidingType, getTypeById
 }

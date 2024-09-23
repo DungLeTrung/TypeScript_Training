@@ -10,6 +10,8 @@ typeRouter.get('/list-types',  protectedRoute(['ADMIN']), typeController.listTyp
 
 typeRouter.put('/edit-type',  protectedRoute(['ADMIN']), typeController.editType);   
 
+typeRouter.get('/get-type/:id', protectedRoute(['ADMIN']), typeController.getTypeById);   
+
 typeRouter.put('/hiding-type/:id',  protectedRoute(['ADMIN']), typeController.hidingType);   
 
 

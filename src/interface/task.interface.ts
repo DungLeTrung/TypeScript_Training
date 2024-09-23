@@ -7,6 +7,7 @@ import { IUser } from "./user.interface";
 export interface ITask {
   name: string;
   assignees?: IUser;
+  assigneeName:  string 
   project?: IProject;
   start_date?: Date;
   end_date?: Date;

@@ -8,6 +8,6 @@ authRouter.post('/login', authController.login);  
 
 authRouter.post('/register', authController.register);   
 
-authRouter.post('/create-account', protectedRoute(['ADMIN']), authController.createAccountThroughInviteId);   
+authRouter.post('/create-account', authController.createAccountThroughInviteId);   
 
 export default authRouter;

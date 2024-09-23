@@ -134,6 +134,24 @@ const hidingStatus = async (statusId: string): Promise<boolean> => {
   }
 };
 
+const getStatusById = async (statusId: string): Promise<IStatus | null> => {
+  try {
+    if (!mongoose.Types.ObjectId.isValid(statusId)) {
+      throw new Error('Invalid status ID format.');
+    }
+
+    const priority = await Status.findOne({_id: statusId, is_hiding: false }) 
+      .exec();
+    if(!priority) {
+      throw new Error('Status not found')
+    } else {
+      return priority;
+    }
+  } catch (error) {
+    throw new Error(`Failed to retrieve status: ${(error as Error).message}`);
+  }
+};
+
 export default {
-  createStatus, listStatuses, editStatus, hidingStatus
+  createStatus, listStatuses, editStatus, hidingStatus, getStatusById
 }

@@ -10,6 +10,8 @@ statusRouter.get('/list-statuses', protectedRoute(['ADMIN']), statusController.l
 
 statusRouter.put('/edit-status',  protectedRoute(['ADMIN']), statusController.editStatus);   
 
+statusRouter.get('/get-status/:id', protectedRoute(['ADMIN']), statusController.getStatusById);   
+
 statusRouter.put('/hiding-status/:id',  protectedRoute(['ADMIN']), statusController.hidingStatus);   
 
 

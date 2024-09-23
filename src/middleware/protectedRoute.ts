@@ -1,14 +1,9 @@
 import { Response, NextFunction, Request } from 'express';
 import jwt from 'jsonwebtoken';
 import * as dotenv from 'dotenv';
+import { CustomRequest } from '../interface/config';
 dotenv.config()
 
-interface CustomRequest extends Request {
-  user?: {
-    username: string;
-    role: string;
-  };
-}
 
 const secretKey = process.env.SECRET_KEY_JWT ?? 'Justascret';
 

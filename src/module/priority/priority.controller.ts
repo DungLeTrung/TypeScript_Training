@@ -91,7 +91,24 @@ const hidingPriority = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
+const getPriorityById = async (req: Request, res: Response): Promise<void> => {
+  const priorityId = req.params.id;
+  try {
+    const success = await priorityService.getPriorityById(priorityId);
+
+    res.status(200).json({
+      message: 'get priority successfully.',
+      data: success,
+    });
+  } catch (error) {
+    const errorMessage = (error as Error).message || 'An unknown error occurred.';
+      res.status(400).json({
+          message: errorMessage,
+      });
+  }
+};
+
 
 export default {
-  createPriority, listPriorities, editPriority, hidingPriority
+  createPriority, listPriorities, editPriority, hidingPriority, getPriorityById
 };

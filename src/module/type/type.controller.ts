@@ -90,7 +90,23 @@ const hidingType = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
+const getTypeById = async (req: Request, res: Response): Promise<void> => {
+  const typeId = req.params.id;
+  try {
+    const success = await typeService.getTypeById(typeId);
+
+    res.status(200).json({
+      message: 'get type successfully.',
+      data: success,
+    });
+  } catch (error) {
+    const errorMessage = (error as Error).message || 'An unknown error occurred.';
+      res.status(400).json({
+          message: errorMessage,
+      });
+  }
+};
 
 export default {
-  createType, listTypes, editType, hidingType
+  createType, listTypes, editType, hidingType, getTypeById
 };
