@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { IProject, IProjectResponse } from '../../interface/project.interface';
+import { IEditProject, IProject, IProjectResponse } from '../../interface/project.interface';
 import projectService from './project.service';
 
 const createProject = async (req: Request, res: Response): Promise<void> => {
@@ -64,7 +64,7 @@ const detailProject = async (req: Request, res: Response): Promise<void> => {
 };
 
  const editProject = async (req: Request, res: Response): Promise<void> => {
-  const { _id, ...updateData }: { _id: string } & IProject = req.body;
+  const { _id, ...updateData }: { _id: string } & IEditProject = req.body;
 
   if (!_id) {
     res.status(400).json({ message: 'Project ID is required.' });

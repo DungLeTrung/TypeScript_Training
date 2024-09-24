@@ -13,6 +13,13 @@ export interface IProject {
   tasks?: Array<ITask>
 }
 
+export interface IEditProject {
+  name: string;
+  slug?: string;
+  start_date?: Date;
+  end_date?: Date;
+}
+
 export interface IProjectFilter {
   slug?: string;
   users?: Array<IUser>

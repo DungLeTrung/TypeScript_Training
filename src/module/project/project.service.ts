@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { IProject, IProjectListResponse } from "../../interface/project.interface";
+import { IEditProject, IProject, IProjectListResponse } from "../../interface/project.interface";
 import { Project } from "../../models/project.model";
 import { User } from "../../models/user.model";
 import { Task } from "../../models/task.model";
@@ -107,15 +107,15 @@ const detailProject = async (projectId: string): Promise<IProject | null> => {
   }
 };
 
-const editProject = async (_id: string, projectData: IProject): Promise<any> => {
-  const startDate = typeof projectData.start_date === 'string' ? new Date(projectData.start_date) : projectData.start_date;
-  const endDate = typeof projectData.end_date === 'string' ? new Date(projectData.end_date) : projectData.end_date;
-
-  if (startDate && endDate && startDate >= endDate) {
-    throw new Error('start_date must be before end_date.');
-  }
-
+const editProject = async (_id: string, projectData: IEditProject): Promise<any> => {
   try {
+    const startDate = typeof projectData.start_date === 'string' ? new Date(projectData.start_date) : projectData.start_date;
+    const endDate = typeof projectData.end_date === 'string' ? new Date(projectData.end_date) : projectData.end_date;
+  
+    if (startDate && endDate && startDate >= endDate) {
+      throw new Error('start_date must be before end_date.');
+    }
+  
     const updatedProject = await Project.findByIdAndUpdate(_id, projectData, { new: true }).exec();
     return updatedProject;
   } catch (error) {

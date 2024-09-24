@@ -277,27 +277,27 @@ const editTask = async (_id: string, req: CustomRequest, taskData: ITask): Promi
 
     const status_closed = await Status.findOne({ type: StatusType.Closed }).exec();
 
-  const closedTasksCount = await Task.countDocuments({ project: project_id, status: status_closed?._id.toString() });
+    const closedTasksCount = await Task.countDocuments({ project: project_id, status: status_closed?._id.toString() });
 
-  const totalTasksCountDoc = await Project.findById(project_id).select('total_task').exec();
+    const totalTasksCountDoc = await Project.findById(project_id).select('total_task').exec();
 
-  if (!totalTasksCountDoc) {
-    throw new Error('Project not found.');
-  }
+    if (!totalTasksCountDoc) {
+      throw new Error('Project not found.');
+    }
 
-  const totalTasksCount = totalTasksCountDoc.total_task != null ? totalTasksCountDoc.total_task : 1;
-  const process = closedTasksCount / totalTasksCount;
+    const totalTasksCount = totalTasksCountDoc.total_task != null ? totalTasksCountDoc.total_task : 1;
+    const process = closedTasksCount / totalTasksCount;
 
-  await Project.findByIdAndUpdate(
-    project_id,
-    { process },
-    { new: true }
-  );
+    await Project.findByIdAndUpdate(
+      project_id,
+      { process },
+      { new: true }
+    );
 
-    return updatedTask;
-  } catch (error) {
-    throw new Error(`Failed to update task: ${(error as Error).message}`);
-  }
+      return updatedTask;
+    } catch (error) {
+      throw new Error(`Failed to update task: ${(error as Error).message}`);
+    }
 };
 
 const deleteTask = async (req: CustomRequest, taskId: string): Promise<boolean> => {
@@ -313,8 +313,9 @@ const deleteTask = async (req: CustomRequest, taskId: string): Promise<boolean> 
     if (!task) {
       throw new Error('Task not found.');
     }
+    console.log(user_id, task.assignees)
 
-    if (user_role !== USER_ROLE.ADMIN && task.assignees !== user_id) {
+    if (user_role !== USER_ROLE.ADMIN && task?.assignees?.toString() !== user_id) {
       throw new Error('You can only delete your own tasks.');
     }
 
@@ -375,7 +376,11 @@ const listTasks = async (req: Request): Promise<ITaskListResponse> => {
       .populate('assignees','name email date_of_birth')
       .populate('type','type')
       .populate('status','type')
-      .populate('priority','type')
+      .populate({
+        path: 'priority',
+        select: 'type position',
+        options: { sort: { position: -1 } }, 
+      })      
       .skip(skip)
       .limit(limit)
       .exec();
@@ -396,8 +401,12 @@ const detailTask = async (taskId: string): Promise<ITask | null> => {
       .select('-users.password') 
       .populate('assignees', 'name email') 
       .populate('type', 'type')
-      .populate('priority', 'type')
       .populate('status', 'type')
+      .populate({
+        path: 'priority',
+        select: 'type position',
+        options: { sort: { position: -1 } }, 
+      })     
       .exec();
     if(!project) {
       throw new Error('Task not found')
@@ -418,7 +427,6 @@ const getTasks = async (
     const limit = parseInt(req.query.limit as string, 10) || 10; 
     const skip = (page - 1) * limit;
 
-    // Build the query object based on the provided filter
     const query: any = {};
     if (filter.project_id) {
       query.project = filter.project_id;
@@ -433,7 +441,11 @@ const getTasks = async (
       .populate('assignees', 'name email date_of_birth')
       .populate('type', 'type')
       .populate('status', 'type')
-      .populate('priority', 'type')
+      .populate({
+        path: 'priority',
+        select: 'type position',
+        options: { sort: { position: -1 } }, 
+      })           
       .skip(skip)
       .limit(limit)
       .exec();

@@ -92,25 +92,25 @@ const deleteUser = async (userId: string): Promise<boolean> => {
 };
 
 const updateUser = async (_id: string, userData: IUserUpdate): Promise<IUserUpdate> => {
-  if (!_id) {
-    throw new Error('Id must be required.');
-  }
-
-  const dateOfBirth = typeof userData.date_of_birth === 'string' ? new Date(userData.date_of_birth) : userData.date_of_birth;
-
-  if (!mongoose.Types.ObjectId.isValid(_id)) {
-    throw new Error('Invalid user ID format.');
-  }
-
-  if (dateOfBirth && dateOfBirth > new Date()) {
-    throw new Error('date_of_birth cannot be a future date.');
-  }
-  
   try {
+    if (!_id) {
+      throw new Error('Id must be required.');
+    }
+  
+    const dateOfBirth = typeof userData.date_of_birth === 'string' ? new Date(userData.date_of_birth) : userData.date_of_birth;
+  
+    if (!mongoose.Types.ObjectId.isValid(_id)) {
+      throw new Error('Invalid user ID format.');
+    }
+  
+    if (dateOfBirth && dateOfBirth > new Date()) {
+      throw new Error('date_of_birth cannot be a future date.');
+    }
+    
     const updatedUser = await User.findByIdAndUpdate(_id, userData, { new: true }).exec();
     return updatedUser as IUser
   } catch (error) {
-    throw new Error(`Failed to update user`);
+    throw new Error(`Failed to update user ${(error as Error).message}`);
   }
 }
 
